@@ -1,0 +1,3 @@
+[submodule "deckbuild-language"]
+	path = deckbuild-language
+	url = git@github.cs.tufts.edu:COMP150PLD-DeckBuildingDSL/COMP150PLD-DeckBuildingDSL.git
