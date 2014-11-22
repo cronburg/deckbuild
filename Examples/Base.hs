@@ -42,8 +42,8 @@ bEC 2 []               = False          -- Two (non-PROVINCE) stacks empty - gam
 bEC 3 _                = True           -- Three stacks empty - game over
 bEC n ((c,0):cs)       = bEC (n + 1) cs -- First stack empty - recurse on (n+1)
 bEC n ((c,_):cs)       = bEC n cs       -- First stack NOT empty - recurse on n
-baseEndCndn :: [(Card,Int)] -> Bool
-baseEndCndn = bEC' 0
+baseEndCndn :: Game -> Bool
+baseEndCndn g = bEC 0 ((piles.supply) g)
 
 --test0 :: forall (m :: * -> *). (MonadState Game m, MonadIO m) => m Game
 {-

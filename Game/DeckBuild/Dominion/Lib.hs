@@ -202,6 +202,6 @@ countVictory (c:cs)
 gameOver :: forall (m :: * -> *). MonadState Game m => m Bool
 gameOver = do
     g <- get 
-    return $ (endCndn 0 ((piles.supply) g)) ||
+    return $ (endCndn g) g ||
              ((turn g >= 0) && (turn g > maxTurns g)) 
 

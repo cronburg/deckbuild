@@ -173,7 +173,7 @@ data Game = Game
   { p1 :: Player, p2 :: Player, trash :: Pile
   , supply :: Supply, turn :: Int, maxTurns :: Int
   , doCardEffects :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Card -> m ()
-  , endCndn :: [(Card,Int)] -> Bool
+  , endCndn :: Game -> Bool
   }
 -- negative maxTurns means unlimited turns
 
