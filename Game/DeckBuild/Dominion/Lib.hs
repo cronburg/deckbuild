@@ -13,7 +13,8 @@ import Language.DeckBuild.Syntax
 import Game.DeckBuild.Dominion.Types
 import Control.Monad.State
 import Game.Sample.Sample
-import Data.List (delete)
+import Data.List (delete, find)
+import Data.Char (toUpper)
 
 addMoney :: forall (m :: * -> *). MonadState Game m => Int -> m ()
 addMoney n = get >>= (\g -> put $ g { p1 = (p1 g) { amtMoney = ((amtMoney . p1) g) + n } })
@@ -118,6 +119,23 @@ gain c = do
               }   
             }   
 
+-- TODO: error condition
+getCard :: [Card] -> String -> Card
+getCard cs n =
+  case find (\(Card {cID = cid}) -> (map toUpper cid) == (map toUpper n)) cs of
+    Just c  -> c
+    Nothing -> undefined
+
+doBasicEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Effect -> m ()
+doBasicEffect e = do
+  g <- get
+  case effectType e of
+    COINS         -> addMoney   $ (amount e)
+    ACTIONS       -> addActions $ (amount e)
+    BUYS          -> addBuys    $ (amount e)
+    CARDS         -> draw       $ (amount e)
+    VICTORYPOINTS -> nop -- TODO: ???
+
 playCard :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Card -> m ()
 playCard c = do
   g <- get
@@ -128,7 +146,9 @@ playCard c = do
             , inPlay = ((inPlay.p1) g) {cards=c : ((cards . inPlay . p1) g)}
             }
           }
-  (doCardEffects g) c
+  mapM doBasicEffect $ (primary.cDescr) c
+  g' <- get
+  (doCardEffects g') c
 
 -- Gets only the treasure cards from a hand:
 filterMoney h = filter isTreasure h

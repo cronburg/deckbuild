@@ -70,7 +70,7 @@ iCards = -- Intrigue Cards:
   , NOBLES]
 -}
 
-cost :: Card -> Integer
+cost :: Card -> Int
 cost (Card {cCost = cst}) = cst
 
 cardTypeIs :: CardType -> Card -> Bool
