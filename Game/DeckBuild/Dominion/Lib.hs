@@ -9,12 +9,15 @@ module Game.DeckBuild.Dominion.Lib where
         from the non-monadic ones (separate files?)
 -}
 
-import Language.DeckBuild.Syntax
+import Language.DeckBuild.Syntax hiding (Card)
 import Game.DeckBuild.Dominion.Types
 import Control.Monad.State
 import Game.Sample.Sample
 import Data.List (delete, find)
 import Data.Char (toUpper)
+
+--import Examples.BaseQuote
+-------------------------------------------------------------------------------
 
 addMoney :: forall (m :: * -> *). MonadState Game m => Int -> m ()
 addMoney n = get >>= (\g -> put $ g { p1 = (p1 g) { amtMoney = ((amtMoney . p1) g) + n } })
@@ -28,18 +31,18 @@ addBuys n = get >>= (\g -> put $ g { p1 = (p1 g) { numBuys = ((numBuys.p1) g) + 
 nop :: forall (m :: * -> *). MonadState Game m => m ()
 nop = return ()
 
-trashCard :: forall (m :: * -> *). MonadState Game m => Card -> m ()
+trashCard :: forall (m :: * -> *). MonadState Game m => RuntimeCard -> m ()
 trashCard c = nop -- TODO - source and destination
 
--- Whether or not the given Card is buy-able in the given supply :: [(Card,Int)]
-canBuySupply :: [(Card,Int)] -> Card -> Bool
+-- Whether or not the given RuntimeCard is buy-able in the given supply :: [(Card,Int)]
+canBuySupply :: [(RuntimeCard,Int)] -> RuntimeCard -> Bool
 canBuySupply [] c = False
 canBuySupply ((c',cnt'):xs) c = (c' == c && cnt' > 0) || (canBuySupply xs c)
 
-canBuy :: Game -> Card -> Bool
+canBuy :: Game -> RuntimeCard -> Bool
 canBuy g c = ((cost c) <= (amtMoney . p1) g) && (canBuySupply ((piles . supply) g) c)
 
-canPlay :: Game -> Card -> Bool
+canPlay :: Game -> RuntimeCard -> Bool
 canPlay g c = elem c ((cards . hand . p1) g)
 
 -- Takes all of player #1's discarded cards and shuffles them back into her deck:
@@ -72,7 +75,7 @@ draw n = do
 
 -- Player #1 discards a specific card from her hand
 -- TODO: Error handling when card is not in hand - probably use a Maybe
-discard :: forall (m :: * -> *). MonadState Game m => Card -> m ()
+discard :: forall (m :: * -> *). MonadState Game m => RuntimeCard -> m ()
 discard c = do
   g <- get
   let newDiscard = c : (cards.discardPile.p1) g
@@ -104,7 +107,7 @@ swapPlayers = do
 findAndDecr c (c',cnt') (c'',cnt'') = if c'' == c then (c'',cnt'' - 1) else (c',cnt')
 
 -- Player #1 buys card c, removing one from the supply and putting into her discard pile
-gain :: forall (m :: * -> *). MonadState Game m => Card -> m ()
+gain :: forall (m :: * -> *). MonadState Game m => RuntimeCard -> m ()
 gain c = do
     g <- get 
     let (c0,cnt0):ss = (piles . supply) g
@@ -120,9 +123,10 @@ gain c = do
             }   
 
 -- TODO: error condition
-getCard :: [Card] -> String -> Card
+getCard :: [RuntimeCard] -> a -> RuntimeCard
 getCard cs n =
-  case find (\(Card {cID = cid}) -> (map toUpper cid) == (map toUpper n)) cs of
+  --case reify $ mkName (show n) of
+  case find (\(RuntimeCard {cID = cid}) -> (map toUpper cid) == (map toUpper n)) cs of
     Just c  -> c
     Nothing -> undefined
 
@@ -136,7 +140,7 @@ doBasicEffect e = do
     CARDS         -> draw       $ (amount e)
     VICTORYPOINTS -> nop -- TODO: ???
 
-playCard :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Card -> m ()
+playCard :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => RuntimeCard -> m ()
 playCard c = do
   g <- get
   let c0:cs   = (cards . hand . p1) g
@@ -154,7 +158,7 @@ playCard c = do
 filterMoney h = filter isTreasure h
 filterNotMoney h = filter (not . isTreasure) h
 
-countMoney :: [Card] -> Int 
+countMoney :: [RuntimeCard] -> Int 
 countMoney [] = 0
 countMoney (c:cs)
   | length ((primary.cDescr) c) == 0 = undefined -- TODO: invalid treasure card
@@ -187,7 +191,7 @@ decrBuys n = do
   g <- get 
   put $ g { p1 = (p1 g) { numBuys = (numBuys . p1) g - n } } 
 
-countVictory :: [Card] -> Int
+countVictory :: [RuntimeCard] -> Int
 countVictory [] = 0
 countVictory (c:cs)
   | length ((primary.cDescr) c) == 0 = undefined -- TODO: invalid victory card

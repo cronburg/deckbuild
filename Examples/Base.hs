@@ -8,7 +8,7 @@ import Game.DeckBuild.Dominion.Lib
 import Game.DeckBuild.Dominion.Base (baseCardEffects)
 import Control.Monad.State
 
-import Language.DeckBuild.Syntax
+import Language.DeckBuild.Syntax  hiding (cID, cType, cDescr, cCost)
 import Examples.BaseQuote
 
 kcs = kingdomCards
