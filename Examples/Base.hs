@@ -11,21 +11,17 @@ import Control.Monad.State
 import Language.DeckBuild.Syntax  hiding (cID, cType, cDescr, cCost)
 import Examples.BaseQuote
 
-kcs = kingdomCards
-
 -- Recommended initial game setup:
-nksupply_init =
-  zip
-    ( map (getCard kcs)
-      [COPPER, SILVER, GOLD, ESTATE, DUCHY, PROVINCE]
-    ) [60    , 40    , 30  , 8     , 8    , 8       ]
+nksupply_init = zip
+  [COPPER, SILVER, GOLD, ESTATE, DUCHY, PROVINCE]
+  [60    , 40    , 30  , 8     , 8    , 8       ]
 
 kcards_init = map (getCard kcs)
   [ CELLAR, MARKET, MILITIA, MINE
   , MOAT, REMODEL, SMITHY, VILLAGE
   , WOODCUTTER, WORKSHOP ]
 
-supply_init = (map (\c -> (c,10)) kcards_init) ++ nksupply_init
+supply_init = (map (\c -> (cID c,10)) kcards_init) ++ nksupply_init
 
 -- The default game with the default set of cards described in the Dominion rulebook:
 defaultBaseGame = defaultGame

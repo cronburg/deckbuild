@@ -13,6 +13,8 @@ import Test.HUnit hiding (test)
 -- TODO: setup modules such that they export other modules required to use them
 --       (e.g. Control.Monad.State in Lib)
 
+import Examples.BaseQuote
+
 -----------------------------------------------------------------------------------------------------
 -- Regression tests:
 test = runTestTT tests

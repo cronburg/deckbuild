@@ -10,39 +10,39 @@ import Language.DeckBuild.Syntax hiding (Card, cID, cType, cDescr, cCost)
 import Examples.BaseQuote
 
 -- Discards any number of cards, returning the number of cards discarded
-cellarEffect' :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => RuntimeCard -> m Int
-cellarEffect' cellar = do
+cellarEffect' :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m Int
+cellarEffect' = do
   g  <- get
-  c' <- liftIO $ ((mayPick.p1) g) g cellar
+  c' <- liftIO $ ((mayPick.p1) g) g CELLAR
   case c' of
     Just c  -> if   elem c ((cards.hand.p1) g)
-               then discard c >> cellarEffect' cellar >>= \n -> return $ n + 1
+               then discard c >> cellarEffect' >>= \n -> return $ n + 1
                else return 0
     Nothing -> return 0
 
 -- Discard any number of cards, then draw that many cards:
-cellarEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => RuntimeCard -> m ()
-cellarEffect cellar = addActions 1 >> cellarEffect' cellar >>= \n -> draw n
+cellarEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+cellarEffect = addActions 1 >> cellarEffect' >>= \n -> draw n
 
 -- Trash up to 4 cards
 -- n == # of cards trashed so far
-chapelEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => RuntimeCard -> Int -> m Int
-chapelEffect _      4 = return 0
-chapelEffect chapel n = do
+chapelEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Int -> m Int
+chapelEffect 4 = return 0
+chapelEffect n = do
   g  <- get
-  c' <- liftIO $ ((mayPick.p1) g) g chapel
+  c' <- liftIO $ ((mayPick.p1) g) g CHAPEL
   case c' of
     Just c  -> if   elem c ((cards.hand.p1) g)
-               then trashCard c >> chapelEffect chapel (n + 1) >>= \n' -> return $ n' + 1
+               then trashCard c >> chapelEffect (n + 1) >>= \n' -> return $ n' + 1
                else return 0
     Nothing -> return 0
 
 -- +2 money, may put deck into discard pile
-chancellorEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => RuntimeCard -> m ()
-chancellorEffect chancellor = do
+chancellorEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+chancellorEffect = do
   addMoney 2
   g  <- get
-  c' <- liftIO $ ((mayPick.p1) g) g chancellor
+  c' <- liftIO $ ((mayPick.p1) g) g CHANCELLOR
   case c' of
     Just _  ->
       put $ g { p1 = (p1 g)
@@ -101,18 +101,17 @@ witchEffect = undefined
 adventurerEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
 adventurerEffect = undefined 
 
-baseCardEffects :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => RuntimeCard -> m ()
-baseCardEffects c = do
- case cID c of
-  CELLAR     -> cellarEffect c
-  CHAPEL     -> chapelEffect c 0 >> return ()
+baseCardEffects :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => CardName -> m ()
+baseCardEffects c = case c of
+  CELLAR     -> cellarEffect
+  CHAPEL     -> chapelEffect 0 >> return ()
   MOAT       -> draw 2
-  CHANCELLOR -> chancellorEffect c -- TODO: may discard
+  CHANCELLOR -> chancellorEffect -- TODO: may discard
   VILLAGE    -> draw 1 >> addActions 2
   WOODCUTTER -> addBuys 1 >> addMoney 2
   WORKSHOP   -> nop -- TODO: ask gain card costing 4
   BUREAUCRAT -> gain SILVER -- TODO: rest of action
-  FEAST      -> trashCard c -- TODO: gain card costing up to $5
+  FEAST      -> trashCard FEAST -- TODO: gain card costing up to $5
   GARDENS    -> nop
   MILITIA    -> addMoney 2 -- TODO: other player chooses cards to discard
   MONEYLENDER -> nop -- TODO

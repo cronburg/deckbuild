@@ -211,7 +211,7 @@ defaultPile = Pile
   , sortPileBy = Nothing
   }
 
-defaultHand = defaultPile { sortPileBy = Just $ cID.(getCard kcs) }
+defaultHand = defaultPile { sortPileBy = Just $ show }
 
 defaultDeck = defaultPile
 
