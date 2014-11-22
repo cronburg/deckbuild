@@ -19,10 +19,10 @@ import Data.Ord (comparing)
 wantToBuy :: Game -> IS.Measure Bool
 wantToBuy g = return $ (amtMoney.p1) g > 2
 
-wantCard :: Game -> Card -> Bool
+wantCard :: Game -> RuntimeCard -> Bool
 wantCard g c = elem c [SILVER, GOLD, DUCHY, PROVINCE, VILLAGE, CHANCELLOR]
 
-cardValue :: (Double,Double) -> Game -> Card -> Double
+cardValue :: (Double,Double) -> Game -> RuntimeCard -> Double
 cardValue ps g c = let (param0,param1) = ps in
   case ((amtMoney.p1) g, c) of
     (3,SILVER)     -> 2.0
@@ -35,15 +35,15 @@ cardValue ps g c = let (param0,param1) = ps in
     (_,PROVINCE)   -> 1.0
     otherwise      -> 0.0
   
-sampleBuy :: (Double,Double) -> Game -> IS.Measure Card
+sampleBuy :: (Double,Double) -> Game -> IS.Measure RuntimeCard
 sampleBuy ps g = do
     card <- uncnd $ categorical $
       [(c, cardValue ps g c) |                   -- Categorical value
-        c <- ((map fst) . piles . supply) g,     -- Cards in supply
+        c <- ((map fst) . piles . supply) g,     -- RuntimeCards in supply
         (cardValue ps g c) > 0.0 && canBuy g c]  -- Buy conditions
     return card
 
-greedyBuy :: (Double,Double) -> Game -> IO (Maybe Card)
+greedyBuy :: (Double,Double) -> Game -> IO (Maybe RuntimeCard)
 greedyBuy ps g = do
   wantACard <- sample1 (wantToBuy g) []
   if wantACard then do
@@ -52,7 +52,7 @@ greedyBuy ps g = do
   else
     return $ Nothing
 
-greedyAct :: Game -> IO (Maybe Card)
+greedyAct :: Game -> IO (Maybe RuntimeCard)
 greedyAct g = do
   let as = filter isAction $ (cards.hand.p1) g
   case length as of
@@ -62,13 +62,13 @@ greedyAct g = do
          else return $ Just $ maximumBy (comparing cost) as
 
 -- Greedy CHANCELLOR always discards deck
-greedyMayPick :: Game -> Card -> IO (Maybe Card)
+greedyMayPick :: Game -> RuntimeCard -> IO (Maybe RuntimeCard)
 greedyMayPick g c' = return $ case c' of
   CHANCELLOR -> Just COPPER  -- any card triggers a discard deck
   otherwise  -> Nothing
 
 -- Not necessary with only VILLAGE and CHANCELLOR actions:
-greedyMustPick :: Game -> Card -> IO Card
+greedyMustPick :: Game -> RuntimeCard -> IO RuntimeCard
 greedyMustPick g c' = undefined
 
 greedyPlayer ps n = defaultPlayer

@@ -5,10 +5,10 @@ import Game.DeckBuild.Dominion.Types
 import Game.DeckBuild.Dominion.Lib
 import Control.Monad.State
 import Data.Char (toUpper)
-import Language.DeckBuild.Syntax
+import Language.DeckBuild.Syntax hiding (Card)
 
 -- Discards any number of cards, returning the number of cards discarded
-cellarEffect' :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Card -> m Int
+cellarEffect' :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => RuntimeCard -> m Int
 cellarEffect' cellar = do
   g  <- get
   c' <- liftIO $ ((mayPick.p1) g) g cellar
@@ -19,12 +19,12 @@ cellarEffect' cellar = do
     Nothing -> return 0
 
 -- Discard any number of cards, then draw that many cards:
-cellarEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Card -> m ()
+cellarEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => RuntimeCard -> m ()
 cellarEffect cellar = addActions 1 >> cellarEffect' cellar >>= \n -> draw n
 
 -- Trash up to 4 cards
 -- n == # of cards trashed so far
-chapelEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Card -> Int -> m Int
+chapelEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => RuntimeCard -> Int -> m Int
 chapelEffect _      4 = return 0
 chapelEffect chapel n = do
   g  <- get
@@ -36,7 +36,7 @@ chapelEffect chapel n = do
     Nothing -> return 0
 
 -- +2 money, may put deck into discard pile
-chancellorEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Card -> m ()
+chancellorEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => RuntimeCard -> m ()
 chancellorEffect chancellor = do
   addMoney 2
   g  <- get
@@ -100,10 +100,10 @@ adventurerEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
 adventurerEffect = undefined 
 
 -- TODO: don't hard-code this
-silver = Card "Silver" TREASURE (CardDescr [Effect   2  COINS        ] []) 3
-curse  = Card "Curse"  VICTORY  (CardDescr [Effect (-1) VICTORYPOINTS] []) 0
+silver = RuntimeCard "Silver" TREASURE (CardDescr [Effect   2  COINS        ] []) 3
+curse  = RuntimeCard "Curse"  VICTORY  (CardDescr [Effect (-1) VICTORYPOINTS] []) 0
 
-baseCardEffects :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Card -> m ()
+baseCardEffects :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => RuntimeCard -> m ()
 baseCardEffects c = do
  case map toUpper $ cID c of
   "CELLAR"     -> cellarEffect c

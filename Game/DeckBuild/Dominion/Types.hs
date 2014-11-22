@@ -7,13 +7,14 @@ import Control.Monad.State
 import Data.List
 import Data.Ord (comparing)
 
-import Language.DeckBuild.Syntax
+import Language.DeckBuild.Syntax hiding (Card, cID, cType, cDescr, cCost)
+import Examples.BaseQuote
 
--- Kingdom Card class type
+-- Kingdom RuntimeCardclass type
 -- (Eq a, Ord a, Typeable a, Show a, Enum a) => 
 
 {-
-data Card =
+data RuntimeCard=
   -- Non-Kingdom cards:
     COPPER | SILVER | GOLD | CURSE | ESTATE | DUCHY | PROVINCE
   -- Base cards:
@@ -70,29 +71,29 @@ iCards = -- Intrigue Cards:
   , NOBLES]
 -}
 
-cost :: Card -> Int
-cost (Card {cCost = cst}) = cst
+cost :: RuntimeCard-> Int
+cost (RuntimeCard{cCost = cst}) = cst
 
-cardTypeIs :: CardType -> Card -> Bool
-cardTypeIs ct' (Card {cType = ct}) = ct == ct'
+cardTypeIs :: CardType -> RuntimeCard-> Bool
+cardTypeIs ct' (RuntimeCard{cType = ct}) = ct == ct'
 
 --actionCards = bCards ++ iCards
-isAction :: Card -> Bool
+isAction :: RuntimeCard-> Bool
 isAction = cardTypeIs ACTION
 --actionCards = filter isAction allCards
 
 --kingdomCards = bCards ++ iCards
-isKingdom :: Card -> Bool
+isKingdom :: RuntimeCard-> Bool
 isKingdom = cardTypeIs ACTION -- TODO: change this to be correct
 --kingdomCards = filter isKingdom allCards
 
 --treasureCards = [COPPER,SILVER,GOLD]
-isTreasure :: Card -> Bool
+isTreasure :: RuntimeCard-> Bool
 isTreasure = cardTypeIs TREASURE
 --treasureCards = filter isTreasure allCards
 
 --victoryCards = [ESTATE,DUCHY,PROVINCE]
-isVictory :: Card -> Bool
+isVictory :: RuntimeCard-> Bool
 isVictory = cardTypeIs VICTORY
 --victoryCards = filter isVictory allCards
 
@@ -100,18 +101,18 @@ isVictory = cardTypeIs VICTORY
 --nkCards = treasureCards ++ victoryCards
 
 --supplyCards = nub $ kingdomCards ++ nkCards
-isSupply :: Card -> Bool
+isSupply :: RuntimeCard-> Bool
 isSupply c = True -- TODO: ...
 
 -- TODO: setup / write SYB or TemplateHaskell to auto-create the above data type definitions
 
 -- Data & type definitions:
 data Pile  = Pile
-  { cards      :: [Card]   -- The list of cards in this pile
+  { cards      :: [RuntimeCard]   -- The list of cards in this pile
   , visibleTo  :: [Player] -- List of players this pile is visible to
   -- Function for sorting this pile (e.g. for printing):
-  --, sortPileBy :: Ord a => Maybe (Card -> a)
-  , sortPileBy :: Maybe (Card -> String)
+  --, sortPileBy :: Ord a => Maybe (RuntimeCard-> a)
+  , sortPileBy :: Maybe (RuntimeCard-> String)
   }
 
 instance Show Pile where
@@ -133,7 +134,7 @@ instance Eq Pile where
 -}
 
 data Supply = Supply
-  { piles :: [(Card,Int)]
+  { piles :: [(RuntimeCard,Int)]
   } deriving (Eq)
 instance Show Supply where
   -- Show supply piles in cost-sorted order:
@@ -149,11 +150,11 @@ type PickHeuristic b a = Game -> b -> IO a
 data Player = Player
   { name :: String, hand :: Pile, deck :: Pile, discardPile :: Pile
   , inPlay :: Pile, numBuys :: Int, numActions :: Int, amtMoney :: Int
-  , actHeuristic   :: Heuristic (Maybe Card) -- Ask player what action to play
-  , moneyHeuristic :: Heuristic (Maybe Card) -- Ask player what money card to play
-  , buyHeuristic   :: Heuristic (Maybe Card) -- Ask player what card to buy
-  , mayPick        :: PickHeuristic Card (Maybe Card) -- Ask player what card to pick e.g. during action
-  , mustPick       :: PickHeuristic Card Card
+  , actHeuristic   :: Heuristic (Maybe RuntimeCard) -- Ask player what action to play
+  , moneyHeuristic :: Heuristic (Maybe RuntimeCard) -- Ask player what money card to play
+  , buyHeuristic   :: Heuristic (Maybe RuntimeCard) -- Ask player what card to buy
+  , mayPick        :: PickHeuristic RuntimeCard (Maybe RuntimeCard) -- Ask player what card to pick e.g. during action
+  , mustPick       :: PickHeuristic RuntimeCard RuntimeCard
   }
 
 instance Eq Player where p1 == p2 = name p1 == name p2
@@ -172,7 +173,7 @@ instance Show Player where
 data Game = Game
   { p1 :: Player, p2 :: Player, trash :: Pile
   , supply :: Supply, turn :: Int, maxTurns :: Int
-  , doCardEffects :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Card -> m ()
+  , doCardEffects :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => RuntimeCard-> m ()
   , endCndn :: Game -> Bool
   }
 -- negative maxTurns means unlimited turns
@@ -218,7 +219,7 @@ defaultPlayer = Player
   , mustPick       = undefined
   }
 
-defaultMoneyHeuristic :: Heuristic (Maybe Card)
+defaultMoneyHeuristic :: Heuristic (Maybe RuntimeCard)
 defaultMoneyHeuristic = (\g -> return $ find isTreasure ((cards.hand.p1) g))
 
 defaultSupply = Supply
