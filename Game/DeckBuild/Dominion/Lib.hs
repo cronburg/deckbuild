@@ -16,6 +16,7 @@ import Game.Sample.Sample
 import Data.List (delete, find)
 import Data.Char (toUpper)
 
+--import Examples.BaseQuote
 -------------------------------------------------------------------------------
 
 addMoney :: forall (m :: * -> *). MonadState Game m => Int -> m ()

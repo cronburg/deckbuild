@@ -201,7 +201,7 @@ defaultPile = Pile
   , sortPileBy = Nothing
   }
 
-defaultHand = defaultPile { sortPileBy = Just $ cID }
+defaultHand = defaultPile { sortPileBy = Just $ show.cID }
 
 defaultDeck = defaultPile
 
