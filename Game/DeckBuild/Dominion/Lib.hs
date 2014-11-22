@@ -9,6 +9,7 @@ module Game.DeckBuild.Dominion.Lib where
         from the non-monadic ones (separate files?)
 -}
 
+import Language.DeckBuild.Syntax
 import Game.DeckBuild.Dominion.Types
 import Control.Monad.State
 import Game.Sample.Sample
@@ -134,11 +135,15 @@ filterMoney h = filter isTreasure h
 filterNotMoney h = filter (not . isTreasure) h
 
 countMoney :: [Card] -> Int 
-countMoney [] = 0 
-countMoney (COPPER:xs) = 1 + countMoney xs
-countMoney (SILVER:xs) = 2 + countMoney xs
-countMoney (GOLD:xs)   = 3 + countMoney xs
-countMoney (x:xs)      = countMoney xs
+countMoney [] = 0
+countMoney (c:cs)
+  | length ((primary.cDescr) c) == 0 = undefined -- TODO: invalid treasure card
+  | isTreasure c = (amount.head.primary.cDescr) c + countMoney cs
+  | otherwise    = countMoney cs 
+--countMoney (COPPER:xs) = 1 + countMoney xs
+--countMoney (SILVER:xs) = 2 + countMoney xs
+--countMoney (GOLD:xs)   = 3 + countMoney xs
+--countMoney (x:xs)      = countMoney xs
 
 {-
 -- Player #1 players all of her money:
@@ -164,7 +169,8 @@ decrBuys n = do
 
 -- Whether or not the game is over for the given supply (n == # supply piles found empty already):
 endCndn :: Int -> [(Card,Int)] -> Bool
-endCndn n ((PROVINCE,0):_) = True          -- Province stack empty - game over
+endCndn n ((Card {cID="Province"},0):_) = True -- TODO: not hardcoded province
+--endCndn n ((PROVINCE,0):_) = True          -- Province stack empty - game over
 endCndn 0 [] = False                       -- No stacks empty - game not over
 endCndn 1 [] = False                       -- One (non-PROVINCE) stack empty - game not over
 endCndn 2 [] = False                       -- Two (non-PROVINCE) stacks empty - game not over
@@ -174,10 +180,14 @@ endCndn n ((c,_):cs) = endCndn n cs       -- First stack NOT empty - recurse on 
 
 countVictory :: [Card] -> Int
 countVictory [] = 0
-countVictory (ESTATE:xs)   = 1 + countVictory xs
-countVictory (DUCHY:xs)    = 3 + countVictory xs
-countVictory (PROVINCE:xs) = 6 + countVictory xs
-countVictory (x:xs)        = 0 + countVictory xs
+countVictory (c:cs)
+  | length ((primary.cDescr) c) == 0 = undefined -- TODO: invalid victory card
+  | isVictory c = (amount.head.primary.cDescr) c + countVictory cs
+  | otherwise   = countVictory cs
+--countVictory (ESTATE:xs)   = 1 + countVictory xs
+--countVictory (DUCHY:xs)    = 3 + countVictory xs
+--countVictory (PROVINCE:xs) = 6 + countVictory xs
+--countVictory (x:xs)        = 0 + countVictory xs
 
 -- Game is over if ending condition is true, or turns ran out:
 gameOver :: forall (m :: * -> *). MonadState Game m => m Bool
