@@ -173,6 +173,7 @@ data Game = Game
   { p1 :: Player, p2 :: Player, trash :: Pile
   , supply :: Supply, turn :: Int, maxTurns :: Int
   , doCardEffects :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Card -> m ()
+  , endCndn :: [(Card,Int)] -> Bool
   }
 -- negative maxTurns means unlimited turns
 
@@ -231,5 +232,6 @@ defaultGame = Game
   , supply=defaultSupply
   , turn=0, maxTurns=100
   , doCardEffects=(\c -> return ())
+  , endCndn = undefined -- TODO: is there a good default end condition without knowing any cards?
   }
 

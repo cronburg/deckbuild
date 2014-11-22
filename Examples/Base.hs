@@ -31,7 +31,19 @@ supply_init = (map (\c -> (c,10)) kcards_init) ++ nksupply_init
 defaultBaseGame = defaultGame
   { supply = defaultSupply { piles = supply_init }
   , doCardEffects = baseCardEffects
+  , endCndn = baseEndCndn
   }
+
+-- Whether or not the game is over for the given supply (n == # supply piles found empty already):
+bEC 0 ((PROVINCE,0):_) = True           -- Province statck empty - game over
+bEC 0 []               = False          -- No stacks empty - game not over
+bEC 1 []               = False          -- One (non-PROVINCE) stack empty - game not over
+bEC 2 []               = False          -- Two (non-PROVINCE) stacks empty - game not over
+bEC 3 _                = True           -- Three stacks empty - game over
+bEC n ((c,0):cs)       = bEC (n + 1) cs -- First stack empty - recurse on (n+1)
+bEC n ((c,_):cs)       = bEC n cs       -- First stack NOT empty - recurse on n
+baseEndCndn :: [(Card,Int)] -> Bool
+baseEndCndn = bEC' 0
 
 --test0 :: forall (m :: * -> *). (MonadState Game m, MonadIO m) => m Game
 {-

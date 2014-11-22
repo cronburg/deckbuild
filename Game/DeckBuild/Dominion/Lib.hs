@@ -187,17 +187,6 @@ decrBuys n = do
   g <- get 
   put $ g { p1 = (p1 g) { numBuys = (numBuys . p1) g - n } } 
 
--- Whether or not the game is over for the given supply (n == # supply piles found empty already):
-endCndn :: Int -> [(Card,Int)] -> Bool
-endCndn n ((Card {cID="Province"},0):_) = True -- TODO: not hardcoded province
---endCndn n ((PROVINCE,0):_) = True          -- Province stack empty - game over
-endCndn 0 [] = False                       -- No stacks empty - game not over
-endCndn 1 [] = False                       -- One (non-PROVINCE) stack empty - game not over
-endCndn 2 [] = False                       -- Two (non-PROVINCE) stacks empty - game not over
-endCndn 3 _  = True                        -- Three stacks empty - game over
-endCndn n ((c,0):cs) = endCndn (n + 1) cs -- First stack empty - recurse on (n+1)
-endCndn n ((c,_):cs) = endCndn n cs       -- First stack NOT empty - recurse on n
-
 countVictory :: [Card] -> Int
 countVictory [] = 0
 countVictory (c:cs)
