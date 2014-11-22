@@ -8,6 +8,8 @@ module API.WebServer where
   import Game.Sample.Sample
   import Haskell.Macros
   import Examples.Base
+  import Language.DeckBuild.Syntax hiding (cID,cType,cDescr,cCost)
+  import Examples.BaseQuote
   import qualified Language.Hakaru.ImportanceSampler as IS
   import Language.Hakaru.Metropolis
   import Language.Hakaru.Types -- Discrete
@@ -92,6 +94,8 @@ module API.WebServer where
                               "cannot be empty" :: Text)
                   | clientExists client clients ->
                       WS.sendTextData conn ("User already exists" :: Text)
+                  | length clients >= 2 ->
+                      WS.sendTextData conn ("Too many players" :: Text)
                   --success
                   | otherwise -> flip finally disconnect $ do
                     liftIO $ modifyMVar_ state $ \s -> do
@@ -101,7 +105,7 @@ module API.WebServer where
                         T.intercalate ", " (map whois s)
                       broadcast ((whois client) `mappend` " joined") s'
                       return s'
-                    talk conn state client
+                    --talk conn state client
                 where
                     client     = ((somePlayer (T.unpack msg) conn), conn)
                     disconnect = do
@@ -128,9 +132,29 @@ module API.WebServer where
     , mustPick     = undefined
     }
 
-  myBuyHeuristic :: WS.Connection -> Game -> IO (Maybe Card)  
-  myBuyHeuristic conn g =
+  myBuyHeuristic :: WS.Connection -> Game -> IO (Maybe CardName)
+  myBuyHeuristic conn g = do
+    --ask the user what they want to buy
+    WS.sendTextData conn "Enter buy command or ? for help:"
+    msg <- WS.receiveData conn
+    --case of
+    case msg of
+      -- ? ->
+      "?" ->
+        --print cards they can buy
+        WS.sendTextData conn "You may enter: buy <cardname> \n"
+        WS.sendTextData conn "Here is a list of cards you can buy:"
+        --print $ show $ (cards . supply) . g
+        WS.sendTextData conn "For a card's details, enter: ? <cardname>"
+        WS.sendTextData conn "For the contents of your hand, enter: hand"
+      -- hand
+      "hand" ->
+        WS.sendTextData conn ""
 
+      -- ? cardname
+       -- case find ((==) (cID c)) kingdomeCards of
+         --Just card -> print info for card;
+         -- Nothing -> print "card not found"
 
   playerGame = defaultBaseGame
     { p1 = somePlayer "Greedy1"
