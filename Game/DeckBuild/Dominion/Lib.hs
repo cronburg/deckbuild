@@ -9,14 +9,14 @@ module Game.DeckBuild.Dominion.Lib where
         from the non-monadic ones (separate files?)
 -}
 
-import Language.DeckBuild.Syntax hiding (Card)
+import Language.DeckBuild.Syntax hiding (Card, cID, cType, cDescr, cCost)
 import Game.DeckBuild.Dominion.Types
 import Control.Monad.State
 import Game.Sample.Sample
 import Data.List (delete, find)
 import Data.Char (toUpper)
 
---import Examples.BaseQuote
+import Examples.BaseQuote
 -------------------------------------------------------------------------------
 
 addMoney :: forall (m :: * -> *). MonadState Game m => Int -> m ()
@@ -123,10 +123,10 @@ gain c = do
             }   
 
 -- TODO: error condition
-getCard :: [RuntimeCard] -> a -> RuntimeCard
+getCard :: [RuntimeCard] -> CardName -> RuntimeCard
 getCard cs n =
   --case reify $ mkName (show n) of
-  case find (\(RuntimeCard {cID = cid}) -> (map toUpper cid) == (map toUpper n)) cs of
+  case find (\(RuntimeCard {cID = cid}) -> cid == n) cs of
     Just c  -> c
     Nothing -> undefined
 
