@@ -5,7 +5,9 @@ import Game.DeckBuild.Dominion.Types
 import Game.DeckBuild.Dominion.Lib
 import Control.Monad.State
 import Data.Char (toUpper)
-import Language.DeckBuild.Syntax hiding (Card)
+import Language.DeckBuild.Syntax hiding (Card, cID, cType, cDescr, cCost)
+
+import Examples.BaseQuote
 
 -- Discards any number of cards, returning the number of cards discarded
 cellarEffect' :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => RuntimeCard -> m Int
@@ -99,36 +101,32 @@ witchEffect = undefined
 adventurerEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
 adventurerEffect = undefined 
 
--- TODO: don't hard-code this
-silver = RuntimeCard "Silver" TREASURE (CardDescr [Effect   2  COINS        ] []) 3
-curse  = RuntimeCard "Curse"  VICTORY  (CardDescr [Effect (-1) VICTORYPOINTS] []) 0
-
 baseCardEffects :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => RuntimeCard -> m ()
 baseCardEffects c = do
- case map toUpper $ cID c of
-  "CELLAR"     -> cellarEffect c
-  "CHAPEL"     -> chapelEffect c 0 >> return ()
-  "MOAT"       -> draw 2
-  "CHANCELLOR" -> chancellorEffect c -- TODO: may discard
-  "VILLAGE"    -> draw 1 >> addActions 2
-  "WOODCUTTER" -> addBuys 1 >> addMoney 2
-  "WORKSHOP"   -> nop -- TODO: ask gain card costing 4
-  "BUREAUCRAT" -> gain silver -- TODO: rest of action
-  "FEAST"      -> trashCard c -- TODO: gain card costing up to $5
-  "GARDENS"    -> nop
-  "MILITIA"    -> addMoney 2 -- TODO: other player chooses cards to discard
-  "MONEYLENDER" -> nop -- TODO
-  "REMODEL"    -> nop -- TODO
-  "SMITHY"     -> draw 3
-  "SPY"        -> draw 1 >> addActions 1 -- TODO
-  "THIEF"      -> nop -- TODO
-  "THRONEROOM" -> nop -- TODO
-  "COUNCILROOM" -> draw 4 >> addBuys 1 >> swapPlayers >> draw 4 >> swapPlayers
-  "FESTIVAL"   -> addActions 2 >> addBuys 1 >> addMoney 2
-  "LABORATORY" -> draw 2 >> addActions 1
-  "LIBRARY"    -> nop -- TODO
-  "MARKET"     -> draw 1 >> addActions 1 >> addBuys 1 >> addMoney 1
-  "MINE"       -> nop -- TODO
-  "WITCH"      -> draw 2 >> swapPlayers >> gain curse >> swapPlayers
-  "ADVENTURER" -> nop -- TODO
+ case cID c of
+  CELLAR     -> cellarEffect c
+  CHAPEL     -> chapelEffect c 0 >> return ()
+  MOAT       -> draw 2
+  CHANCELLOR -> chancellorEffect c -- TODO: may discard
+  VILLAGE    -> draw 1 >> addActions 2
+  WOODCUTTER -> addBuys 1 >> addMoney 2
+  WORKSHOP   -> nop -- TODO: ask gain card costing 4
+  BUREAUCRAT -> gain SILVER -- TODO: rest of action
+  FEAST      -> trashCard c -- TODO: gain card costing up to $5
+  GARDENS    -> nop
+  MILITIA    -> addMoney 2 -- TODO: other player chooses cards to discard
+  MONEYLENDER -> nop -- TODO
+  REMODEL    -> nop -- TODO
+  SMITHY     -> draw 3
+  SPY        -> draw 1 >> addActions 1 -- TODO
+  THIEF      -> nop -- TODO
+  THRONEROOM -> nop -- TODO
+  COUNCILROOM -> draw 4 >> addBuys 1 >> swapPlayers >> draw 4 >> swapPlayers
+  FESTIVAL   -> addActions 2 >> addBuys 1 >> addMoney 2
+  LABORATORY -> draw 2 >> addActions 1
+  LIBRARY    -> nop -- TODO
+  MARKET     -> draw 1 >> addActions 1 >> addBuys 1 >> addMoney 1
+  MINE       -> nop -- TODO
+  WITCH      -> draw 2 >> swapPlayers >> gain CURSE >> swapPlayers
+  ADVENTURER -> nop -- TODO
 

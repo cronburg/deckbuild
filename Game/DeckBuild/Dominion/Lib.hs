@@ -31,7 +31,7 @@ addBuys n = get >>= (\g -> put $ g { p1 = (p1 g) { numBuys = ((numBuys.p1) g) + 
 nop :: forall (m :: * -> *). MonadState Game m => m ()
 nop = return ()
 
-trashCard :: forall (m :: * -> *). MonadState Game m => RuntimeCard -> m ()
+trashCard :: forall (m :: * -> *). MonadState Game m => CardName -> m ()
 trashCard c = nop -- TODO - source and destination
 
 -- Whether or not the given RuntimeCard is buy-able in the given supply :: [(Card,Int)]
@@ -75,7 +75,7 @@ draw n = do
 
 -- Player #1 discards a specific card from her hand
 -- TODO: Error handling when card is not in hand - probably use a Maybe
-discard :: forall (m :: * -> *). MonadState Game m => RuntimeCard -> m ()
+discard :: forall (m :: * -> *). MonadState Game m => CardName -> m ()
 discard c = do
   g <- get
   let newDiscard = c : (cards.discardPile.p1) g
@@ -107,7 +107,7 @@ swapPlayers = do
 findAndDecr c (c',cnt') (c'',cnt'') = if c'' == c then (c'',cnt'' - 1) else (c',cnt')
 
 -- Player #1 buys card c, removing one from the supply and putting into her discard pile
-gain :: forall (m :: * -> *). MonadState Game m => RuntimeCard -> m ()
+gain :: forall (m :: * -> *). MonadState Game m => CardName -> m ()
 gain c = do
     g <- get 
     let (c0,cnt0):ss = (piles . supply) g
@@ -121,14 +121,6 @@ gain c = do
               , amtMoney = ((amtMoney.p1) g) - (cost c)
               }   
             }   
-
--- TODO: error condition
-getCard :: [RuntimeCard] -> CardName -> RuntimeCard
-getCard cs n =
-  --case reify $ mkName (show n) of
-  case find (\(RuntimeCard {cID = cid}) -> cid == n) cs of
-    Just c  -> c
-    Nothing -> undefined
 
 doBasicEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Effect -> m ()
 doBasicEffect e = do
