@@ -1,14 +1,18 @@
 {-# LANGUAGE DeriveDataTypeable, RankNTypes, FlexibleInstances, FlexibleContexts,
              KindSignatures, ScopedTypeVariables #-}
 module Game.DeckBuild.Dominion.Types where
+
 import Data.Typeable
 import Control.Monad.State
 import Data.List
 import Data.Ord (comparing)
 
+import Language.DeckBuild.Syntax
+
 -- Kingdom Card class type
 -- (Eq a, Ord a, Typeable a, Show a, Enum a) => 
 
+{-
 data Card =
   -- Non-Kingdom cards:
     COPPER | SILVER | GOLD | CURSE | ESTATE | DUCHY | PROVINCE
@@ -42,11 +46,15 @@ cost c = case c of
   COPPERSMITH -> 4; IRONWORKS -> 4;   MININGVILLAGE -> 4; SCOUT -> 4;     DUKE -> 5;       MINION -> 5;
   SABOTEUR -> 5;    TORTURER -> 5;    TRADINGPOST -> 5;   TRIBUTE -> 5
   UPGRADE -> 5;     HAREM -> 6;       NOBLES -> 6
+-}
 
 -- ALL possible cards
+{-
 allCards :: [Card]
 allCards = [minBound..]
+-}
 
+{-
 bCards  = -- Base Cards:
   [CELLAR, CHAPEL, MOAT, CHANCELLOR, VILLAGE, WOODCUTTER
   , WORKSHOP, BUREAUCRAT, FEAST, GARDENS, MILITIA, MONEYLENDER
@@ -60,29 +68,40 @@ iCards = -- Intrigue Cards:
   , COPPERSMITH, IRONWORKS, MININGVILLAGE, SCOUT, DUKE, MINION
   , SABOTEUR, TORTURER, TRADINGPOST, TRIBUTE, UPGRADE, HAREM
   , NOBLES]
+-}
 
-actionCards = bCards ++ iCards
+cost :: Card -> Int
+cost (Card {cCost = cst}) = cst
+
+cardTypeIs :: CardType -> Card -> Bool
+cardTypeIs ct' (Card {cType = ct}) = ct == ct'
+
+--actionCards = bCards ++ iCards
 isAction :: Card -> Bool
-isAction c = elem c actionCards
+isAction = cardTypeIs ACTION
+--actionCards = filter isAction allCards
 
-kingdomCards = bCards ++ iCards
+--kingdomCards = bCards ++ iCards
 isKingdom :: Card -> Bool
-isKingdom c = elem c kingdomCards
+isKingdom = cardTypeIs ACTION -- TODO: change this to be correct
+--kingdomCards = filter isKingdom allCards
 
-treasureCards = [COPPER,SILVER,GOLD]
+--treasureCards = [COPPER,SILVER,GOLD]
 isTreasure :: Card -> Bool
-isTreasure c = elem c treasureCards
+isTreasure = cardTypeIs TREASURE
+--treasureCards = filter isTreasure allCards
 
-victoryCards = [ESTATE,DUCHY,PROVINCE]
+--victoryCards = [ESTATE,DUCHY,PROVINCE]
 isVictory :: Card -> Bool
-isVictory c = elem c victoryCards
+isVictory = cardTypeIs VICTORY
+--victoryCards = filter isVictory allCards
 
 -- Non-Kingdom Cards:
-nkCards = treasureCards ++ victoryCards
+--nkCards = treasureCards ++ victoryCards
 
-supplyCards = nub $ kingdomCards ++ nkCards
+--supplyCards = nub $ kingdomCards ++ nkCards
 isSupply :: Card -> Bool
-isSupply c = elem c supplyCards
+isSupply c = True -- TODO: ...
 
 -- TODO: setup / write SYB or TemplateHaskell to auto-create the above data type definitions
 
@@ -92,7 +111,7 @@ data Pile  = Pile
   , visibleTo  :: [Player] -- List of players this pile is visible to
   -- Function for sorting this pile (e.g. for printing):
   --, sortPileBy :: Ord a => Maybe (Card -> a)
-  , sortPileBy :: Maybe (Card -> Int)
+  , sortPileBy :: Maybe (Card -> String)
   }
 
 instance Show Pile where
@@ -154,6 +173,7 @@ data Game = Game
   { p1 :: Player, p2 :: Player, trash :: Pile
   , supply :: Supply, turn :: Int, maxTurns :: Int
   , doCardEffects :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Card -> m ()
+  , endCndn :: Game -> Bool
   }
 -- negative maxTurns means unlimited turns
 
@@ -180,15 +200,17 @@ defaultPile = Pile
   , sortPileBy = Nothing
   }
 
-defaultHand = defaultPile { sortPileBy = Just fromEnum }
+defaultHand = defaultPile { sortPileBy = Just $ cID }
+
+defaultDeck = defaultPile
 
 -- Default player and game constructors:
 defaultPlayer = Player
   { name="INVALID_PLAYER_NAME"
   , hand=defaultHand, inPlay=defaultPile
   , numActions=1, numBuys=1, amtMoney=0
-  , deck = defaultPile { cards = (replicate 7 COPPER) ++ (replicate 3 ESTATE) }
-  , discardPile = defaultPile
+  , deck           = defaultDeck
+  , discardPile    = defaultPile
   , actHeuristic   = nullHeuristic -- default to always playing nothing
   , buyHeuristic   = nullHeuristic -- default to always buying nothing
   , moneyHeuristic = defaultMoneyHeuristic -- play all money by default
@@ -210,5 +232,6 @@ defaultGame = Game
   , supply=defaultSupply
   , turn=0, maxTurns=100
   , doCardEffects=(\c -> return ())
+  , endCndn = undefined -- TODO: is there a good default end condition without knowing any cards?
   }
 

@@ -7,7 +7,7 @@ import Game.DeckBuild.Dominion.Types
 import Game.Sample.Sample
 import Haskell.Macros
 import Examples.Base
-
+import Examples.BaseQuote
 
 import qualified Language.Hakaru.ImportanceSampler as IS
 import Language.Hakaru.Metropolis

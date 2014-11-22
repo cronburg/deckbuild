@@ -92,6 +92,7 @@ module API.WebServer where
                               "cannot be empty" :: Text)
                   | clientExists client clients ->
                       WS.sendTextData conn ("User already exists" :: Text)
+                  --success
                   | otherwise -> flip finally disconnect $ do
                     liftIO $ modifyMVar_ state $ \s -> do
                       let s' = addClient client s
@@ -102,8 +103,7 @@ module API.WebServer where
                       return s'
                     talk conn state client
                 where
-                    prefix     = "Hi! I am "
-                    client     = ((somePlayer (T.unpack msg)), conn)
+                    client     = ((somePlayer (T.unpack msg) conn), conn)
                     disconnect = do
                           -- Remove client and return new state
                           s <- modifyMVar state $ \s ->
@@ -120,13 +120,17 @@ module API.WebServer where
   whois client = T.pack $ name $ fst client
 
   {- GAME LOGIC -}
-  somePlayer n = defaultPlayer
+  somePlayer n conn = defaultPlayer
     { name = n
-    , buyHeuristic = undefined
-    , actHeuristic = undefined
+    , buyHeuristic = (myBuyHeuristic conn)
+    , actHeuristic = (myActHeuristic conn)
     , mayPick      = undefined
     , mustPick     = undefined
     }
+
+  myBuyHeuristic :: WS.Connection -> Game -> IO (Maybe Card)  
+  myBuyHeuristic conn g =
+
 
   playerGame = defaultBaseGame
     { p1 = somePlayer "Greedy1"

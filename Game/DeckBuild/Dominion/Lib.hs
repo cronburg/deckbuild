@@ -9,10 +9,12 @@ module Game.DeckBuild.Dominion.Lib where
         from the non-monadic ones (separate files?)
 -}
 
+import Language.DeckBuild.Syntax
 import Game.DeckBuild.Dominion.Types
 import Control.Monad.State
 import Game.Sample.Sample
-import Data.List (delete)
+import Data.List (delete, find)
+import Data.Char (toUpper)
 
 addMoney :: forall (m :: * -> *). MonadState Game m => Int -> m ()
 addMoney n = get >>= (\g -> put $ g { p1 = (p1 g) { amtMoney = ((amtMoney . p1) g) + n } })
@@ -117,6 +119,23 @@ gain c = do
               }   
             }   
 
+-- TODO: error condition
+getCard :: [Card] -> String -> Card
+getCard cs n =
+  case find (\(Card {cID = cid}) -> (map toUpper cid) == (map toUpper n)) cs of
+    Just c  -> c
+    Nothing -> undefined
+
+doBasicEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Effect -> m ()
+doBasicEffect e = do
+  g <- get
+  case effectType e of
+    COINS         -> addMoney   $ (amount e)
+    ACTIONS       -> addActions $ (amount e)
+    BUYS          -> addBuys    $ (amount e)
+    CARDS         -> draw       $ (amount e)
+    VICTORYPOINTS -> nop -- TODO: ???
+
 playCard :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Card -> m ()
 playCard c = do
   g <- get
@@ -127,18 +146,24 @@ playCard c = do
             , inPlay = ((inPlay.p1) g) {cards=c : ((cards . inPlay . p1) g)}
             }
           }
-  (doCardEffects g) c
+  mapM doBasicEffect $ (primary.cDescr) c
+  g' <- get
+  (doCardEffects g') c
 
 -- Gets only the treasure cards from a hand:
 filterMoney h = filter isTreasure h
 filterNotMoney h = filter (not . isTreasure) h
 
 countMoney :: [Card] -> Int 
-countMoney [] = 0 
-countMoney (COPPER:xs) = 1 + countMoney xs
-countMoney (SILVER:xs) = 2 + countMoney xs
-countMoney (GOLD:xs)   = 3 + countMoney xs
-countMoney (x:xs)      = countMoney xs
+countMoney [] = 0
+countMoney (c:cs)
+  | length ((primary.cDescr) c) == 0 = undefined -- TODO: invalid treasure card
+  | isTreasure c = (amount.head.primary.cDescr) c + countMoney cs
+  | otherwise    = countMoney cs 
+--countMoney (COPPER:xs) = 1 + countMoney xs
+--countMoney (SILVER:xs) = 2 + countMoney xs
+--countMoney (GOLD:xs)   = 3 + countMoney xs
+--countMoney (x:xs)      = countMoney xs
 
 {-
 -- Player #1 players all of her money:
@@ -162,27 +187,21 @@ decrBuys n = do
   g <- get 
   put $ g { p1 = (p1 g) { numBuys = (numBuys . p1) g - n } } 
 
--- Whether or not the game is over for the given supply (n == # supply piles found empty already):
-endCndn :: Int -> [(Card,Int)] -> Bool
-endCndn n ((PROVINCE,0):_) = True          -- Province stack empty - game over
-endCndn 0 [] = False                       -- No stacks empty - game not over
-endCndn 1 [] = False                       -- One (non-PROVINCE) stack empty - game not over
-endCndn 2 [] = False                       -- Two (non-PROVINCE) stacks empty - game not over
-endCndn 3 _  = True                        -- Three stacks empty - game over
-endCndn n ((c,0):cs) = endCndn (n + 1) cs -- First stack empty - recurse on (n+1)
-endCndn n ((c,_):cs) = endCndn n cs       -- First stack NOT empty - recurse on n
-
 countVictory :: [Card] -> Int
 countVictory [] = 0
-countVictory (ESTATE:xs)   = 1 + countVictory xs
-countVictory (DUCHY:xs)    = 3 + countVictory xs
-countVictory (PROVINCE:xs) = 6 + countVictory xs
-countVictory (x:xs)        = 0 + countVictory xs
+countVictory (c:cs)
+  | length ((primary.cDescr) c) == 0 = undefined -- TODO: invalid victory card
+  | isVictory c = (amount.head.primary.cDescr) c + countVictory cs
+  | otherwise   = countVictory cs
+--countVictory (ESTATE:xs)   = 1 + countVictory xs
+--countVictory (DUCHY:xs)    = 3 + countVictory xs
+--countVictory (PROVINCE:xs) = 6 + countVictory xs
+--countVictory (x:xs)        = 0 + countVictory xs
 
 -- Game is over if ending condition is true, or turns ran out:
 gameOver :: forall (m :: * -> *). MonadState Game m => m Bool
 gameOver = do
     g <- get 
-    return $ (endCndn 0 ((piles.supply) g)) ||
+    return $ (endCndn g) g ||
              ((turn g >= 0) && (turn g > maxTurns g)) 
 
