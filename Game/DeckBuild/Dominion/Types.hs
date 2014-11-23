@@ -71,29 +71,39 @@ iCards = -- Intrigue Cards:
   , NOBLES]
 -}
 
-cost :: RuntimeCard-> Int
-cost (RuntimeCard{cCost = cst}) = cst
+-- TODO: error condition
+getCard :: [RuntimeCard] -> CardName -> RuntimeCard
+getCard cs n = 
+  --case reify $ mkName (show n) of
+  case find (\(RuntimeCard {cID = cid}) -> cid == n) cs of
+    Just c  -> c
+    Nothing -> undefined
 
-cardTypeIs :: CardType -> RuntimeCard-> Bool
-cardTypeIs ct' (RuntimeCard{cType = ct}) = ct == ct'
+kcs = kingdomCards
+
+cost :: CardName -> Int
+cost = cCost . (getCard kcs)
+
+cardTypeIs :: CardType -> CardName -> Bool
+cardTypeIs ct n = cType (getCard kcs n) == ct
 
 --actionCards = bCards ++ iCards
-isAction :: RuntimeCard-> Bool
+isAction :: CardName -> Bool
 isAction = cardTypeIs ACTION
 --actionCards = filter isAction allCards
 
 --kingdomCards = bCards ++ iCards
-isKingdom :: RuntimeCard-> Bool
+isKingdom :: CardName -> Bool
 isKingdom = cardTypeIs ACTION -- TODO: change this to be correct
 --kingdomCards = filter isKingdom allCards
 
 --treasureCards = [COPPER,SILVER,GOLD]
-isTreasure :: RuntimeCard-> Bool
+isTreasure :: CardName -> Bool
 isTreasure = cardTypeIs TREASURE
 --treasureCards = filter isTreasure allCards
 
 --victoryCards = [ESTATE,DUCHY,PROVINCE]
-isVictory :: RuntimeCard-> Bool
+isVictory :: CardName -> Bool
 isVictory = cardTypeIs VICTORY
 --victoryCards = filter isVictory allCards
 
@@ -101,18 +111,18 @@ isVictory = cardTypeIs VICTORY
 --nkCards = treasureCards ++ victoryCards
 
 --supplyCards = nub $ kingdomCards ++ nkCards
-isSupply :: RuntimeCard-> Bool
+isSupply :: CardName -> Bool
 isSupply c = True -- TODO: ...
 
 -- TODO: setup / write SYB or TemplateHaskell to auto-create the above data type definitions
 
 -- Data & type definitions:
 data Pile  = Pile
-  { cards      :: [RuntimeCard]   -- The list of cards in this pile
+  { cards      :: [CardName]   -- The list of cards in this pile
   , visibleTo  :: [Player] -- List of players this pile is visible to
   -- Function for sorting this pile (e.g. for printing):
-  --, sortPileBy :: Ord a => Maybe (RuntimeCard-> a)
-  , sortPileBy :: Maybe (RuntimeCard-> String)
+  --, sortPileBy :: Ord a => Maybe (CardName -> a)
+  , sortPileBy :: Maybe (CardName -> String)
   }
 
 instance Show Pile where
@@ -134,7 +144,7 @@ instance Eq Pile where
 -}
 
 data Supply = Supply
-  { piles :: [(RuntimeCard,Int)]
+  { piles :: [(CardName,Int)]
   } deriving (Eq)
 instance Show Supply where
   -- Show supply piles in cost-sorted order:
@@ -150,11 +160,11 @@ type PickHeuristic b a = Game -> b -> IO a
 data Player = Player
   { name :: String, hand :: Pile, deck :: Pile, discardPile :: Pile
   , inPlay :: Pile, numBuys :: Int, numActions :: Int, amtMoney :: Int
-  , actHeuristic   :: Heuristic (Maybe RuntimeCard) -- Ask player what action to play
-  , moneyHeuristic :: Heuristic (Maybe RuntimeCard) -- Ask player what money card to play
-  , buyHeuristic   :: Heuristic (Maybe RuntimeCard) -- Ask player what card to buy
-  , mayPick        :: PickHeuristic RuntimeCard (Maybe RuntimeCard) -- Ask player what card to pick e.g. during action
-  , mustPick       :: PickHeuristic RuntimeCard RuntimeCard
+  , actHeuristic   :: Heuristic (Maybe CardName) -- Ask player what action to play
+  , moneyHeuristic :: Heuristic (Maybe CardName) -- Ask player what money card to play
+  , buyHeuristic   :: Heuristic (Maybe CardName) -- Ask player what card to buy
+  , mayPick        :: PickHeuristic CardName (Maybe CardName) -- Ask player what card to pick e.g. during action
+  , mustPick       :: PickHeuristic CardName CardName
   }
 
 instance Eq Player where p1 == p2 = name p1 == name p2
@@ -173,9 +183,9 @@ instance Show Player where
 data Game = Game
   { p1 :: Player, p2 :: Player, trash :: Pile
   , supply :: Supply, turn :: Int, maxTurns :: Int
-  , doCardEffects :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => RuntimeCard-> m ()
+  , doCardEffects :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => CardName -> m ()
   , endCndn :: Game -> Bool
-  }
+  } deriving (Typeable)
 -- negative maxTurns means unlimited turns
 
 instance Eq Game where
@@ -201,9 +211,10 @@ defaultPile = Pile
   , sortPileBy = Nothing
   }
 
-defaultHand = defaultPile { sortPileBy = Just $ show.cID }
+defaultHand = defaultPile { sortPileBy = Just $ show }
 
-defaultDeck = defaultPile
+-- TODO: remove hard-coded card references:
+defaultDeck = defaultPile { cards = (replicate 7 COPPER) ++ (replicate 3 ESTATE) }
 
 -- Default player and game constructors:
 defaultPlayer = Player
@@ -219,7 +230,7 @@ defaultPlayer = Player
   , mustPick       = undefined
   }
 
-defaultMoneyHeuristic :: Heuristic (Maybe RuntimeCard)
+defaultMoneyHeuristic :: Heuristic (Maybe CardName)
 defaultMoneyHeuristic = (\g -> return $ find isTreasure ((cards.hand.p1) g))
 
 defaultSupply = Supply

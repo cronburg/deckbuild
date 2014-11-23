@@ -49,7 +49,7 @@ uniformInt mn' mx' = do
 
 -- Shuffling using System.Random:
 shuffleList d = do
-    g <- newStdGen
+    g <- newStdGen -- TODO: keep random gen in game data type
     return $ shuffle' d (length d) g
 
 

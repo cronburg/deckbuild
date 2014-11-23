@@ -35,13 +35,13 @@ wantToBuy g = do
 --  liftIO = lift . liftIO
 
 -- Perceived value of a card c if player #1 in game g were to buy it
-cardValue :: Game -> RuntimeCard -> Double
+cardValue :: Game -> CardName -> Double
 --cardValue g c = fI $ cost c
 cardValue g c = case c of
   GOLD -> 100; SILVER -> 80; VILLAGE -> 60; MOAT -> 0; CELLAR -> 1;
   PROVINCE -> 1000; otherwise -> 0
 
-wantCard :: Game -> RuntimeCard -> Bool
+wantCard :: Game -> CardName -> Bool
 wantCard g c = case c of
   SILVER    -> True
   GOLD      -> True
@@ -53,16 +53,16 @@ wantCard g c = case c of
   otherwise -> False
 
 -- What card should be bought in game state g by player #1
-bestBuy :: Game -> IS.Measure RuntimeCard
+bestBuy :: Game -> IS.Measure CardName
 bestBuy g = do
     card <- uncnd $ categorical $
       [(c, cardValue g c) |                   -- Categorical value
         --c <- (map fst (piles (supply g)))
-        c <- ((map fst) . piles . supply) g,  -- RuntimeCards in supply
+        c <- ((map fst) . piles . supply) g,  -- CardNames in supply
         wantCard g c && canBuy g c]           -- Buy conditions
     return card
 
-greedyBuy :: Game -> IO (Maybe RuntimeCard)
+greedyBuy :: Game -> IO (Maybe CardName)
 greedyBuy g = do
   wantACard <- sample1 (wantToBuy g) []
   if wantACard then do
@@ -72,7 +72,7 @@ greedyBuy g = do
   else
     return $ Nothing
 
-greedyAct :: Game -> IO (Maybe RuntimeCard)
+greedyAct :: Game -> IO (Maybe CardName)
 greedyAct g = do
   let as = filter isAction $ (cards.hand.p1) g
   case length as of
@@ -84,14 +84,14 @@ greedyAct g = do
 cellarPick g = maybeHead $ filter isVictory ((cards.hand.p1) g)
 
 -- c' == the card which caused us to have to maybe pick a card
-greedyMayPick :: Game -> RuntimeCard -> IO (Maybe RuntimeCard)
+greedyMayPick :: Game -> CardName -> IO (Maybe CardName)
 greedyMayPick g c' = return $ case c' of
   CELLAR     -> cellarPick g -- pick a victory card in hand if exists
   CHANCELLOR -> Just COPPER  -- any card triggers a discard deck
   otherwise  -> Nothing
 
 -- c' == the card which caused us to have to pick a card
-greedyMustPick :: Game -> RuntimeCard -> IO RuntimeCard
+greedyMustPick :: Game -> CardName -> IO CardName
 greedyMustPick g c' = undefined
 
 greedyPlayer n = defaultPlayer

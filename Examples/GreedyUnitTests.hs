@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveDataTypeable, RankNTypes, FlexibleInstances, FlexibleContexts,
+             KindSignatures, ScopedTypeVariables #-}
 module Examples.GreedyUnitTests where
 import Examples.Base
 import Examples.Greedy
@@ -6,6 +8,9 @@ import Game.DeckBuild.Dominion.Engine
 import Game.DeckBuild.Dominion.Lib
 import Game.DeckBuild.Dominion.Base (baseCardEffects)
 import Control.Monad.State
+import System.IO.Unsafe (unsafePerformIO)
+
+import Examples.BaseQuote
 
 -- TODO: add this module to cabal
 
@@ -15,7 +20,7 @@ firstHandGame = defaultGame
       { cards = [COPPER,ESTATE,DUCHY,PROVINCE,COPPER] } } }
 
 -- Greedy CELLAR player should discard all three victory cards in her hand:
-gTest0 = do
-  g <- execStateT (baseCardEffects CELLAR) greedyGame
-  return $ all id [elem c ((cards.discardPile.p1) g) | c <- [ESTATE,DUCHY,PROVINCE]]
+gTest0 =
+  let g = unsafePerformIO $ execStateT (baseCardEffects CELLAR) greedyGame
+  in [elem c ((cards.discardPile.p1) g) | c <- [ESTATE,DUCHY,PROVINCE]]
 
