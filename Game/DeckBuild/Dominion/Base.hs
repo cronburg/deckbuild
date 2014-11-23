@@ -128,4 +128,5 @@ baseCardEffects c = case c of
   MINE       -> nop -- TODO
   WITCH      -> draw 2 >> swapPlayers >> gain CURSE >> swapPlayers
   ADVENTURER -> nop -- TODO
+  otherwise  -> nop
 

@@ -213,7 +213,8 @@ defaultPile = Pile
 
 defaultHand = defaultPile { sortPileBy = Just $ show }
 
-defaultDeck = defaultPile
+-- TODO: remove hard-coded card references:
+defaultDeck = defaultPile { cards = (replicate 7 COPPER) ++ (replicate 3 ESTATE) }
 
 -- Default player and game constructors:
 defaultPlayer = Player
