@@ -1,3 +1,4 @@
 cabal.sandbox.config
 .cabal-sandbox
 dist
+deckbuild-0.1.0.0.tar.gz

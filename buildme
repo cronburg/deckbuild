@@ -1,0 +1,33 @@
+#!/bin/bash
+tar -xvf deckbuild-0.1.0.0.tar.gz
+cabal sandbox init
+cabal sandbox add-source deckbuild-0.1.0.0
+cabal install --dependencies-only
+cabal build
+cabal install
+
+# After running the above, you can do:
+# $ cabal repl
+# λ> import Examples.First
+# λ> test
+# Player1:
+#     name   = "Greedy1"
+#     hand   = [COPPER,ESTATE,ESTATE,GOLD,VILLAGE]
+#     inPlay = []
+#     deck   = [GOLD,VILLAGE,PROVINCE,SILVER,VILLAGE,PROVINCE,COPPER,ESTATE,COPPER,VILLAGE,COPPER,SILVER,SILVER,SILVER,COPPER,SILVER,PROVINCE,COPPER,PROVINCE,SILVER,VILLAGE,COPPER]
+#     dscrd  = []
+#     buys=1, actions=1, money=0
+# 
+# Player2:
+#     name   = "Greedy2"
+#     hand   = [PROVINCE,PROVINCE,SILVER,VILLAGE,VILLAGE]
+#     inPlay = []
+#     deck   = [COPPER,ESTATE,GOLD,COPPER]
+#     dscrd  = [PROVINCE,COPPER,COPPER,SILVER,SILVER,GOLD,VILLAGE,PROVINCE,ESTATE,ESTATE,COPPER,COPPER,SILVER,SILVER,COPPER,VILLAGE,VILLAGE,GOLD]
+#     buys=1, actions=1, money=0
+# 
+# Trash: []
+# Supply: [(COPPER,60),(CELLAR,10),(MOAT,10),(ESTATE,8),(VILLAGE,0),(SILVER,29),(WOODCUTTER,10),(WORKSHOP,10),(MILITIA,10),(REMODEL,10),(SMITHY,10),(MARKET,10),(MINE,10),(DUCHY,8),(GOLD,25),(PROVINCE,0)]
+# Turn #: 36
+# λ> 
+

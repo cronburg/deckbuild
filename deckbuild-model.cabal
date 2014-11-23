@@ -13,7 +13,7 @@ maintainer:          karl.cronburg@gmail.com
 -- copyright:           
 category:            Game
 build-type:          Simple
-extra-source-files:  README.md
+extra-source-files:  README.md, deckbuild-0.1.0.0.tar.gz, buildme
 cabal-version:       >=1.10
 
 library
@@ -21,7 +21,7 @@ library
                      , Examples.Base, Examples.Greedy, Game.DeckBuild.Dominion.Base
                      , Game.Sample.Sample, Game.DeckBuild.Dominion.Lib, Examples.UnitTests
                      , Examples.GreedySampler, Examples.GreedyMCMC, Examples.GreedyUnitTests
-                     , Examples.First
+                     , Examples.First, Haskell.Macros, Game.Sample.Hakaru
   -- other-modules:       
   other-extensions:    DeriveDataTypeable, RankNTypes, FlexibleInstances, FlexibleContexts,
                        KindSignatures, ScopedTypeVariables, NoMonomorphismRestriction,
