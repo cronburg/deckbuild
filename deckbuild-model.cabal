@@ -21,6 +21,7 @@ library
                      , Examples.Base, Examples.Greedy, Game.DeckBuild.Dominion.Base
                      , Game.Sample.Sample, Game.DeckBuild.Dominion.Lib, Examples.UnitTests
                      , Examples.GreedySampler, Examples.GreedyMCMC, Examples.GreedyUnitTests
+                     , Examples.First
   -- other-modules:       
   other-extensions:    DeriveDataTypeable, RankNTypes, FlexibleInstances, FlexibleContexts,
                        KindSignatures, ScopedTypeVariables, NoMonomorphismRestriction,

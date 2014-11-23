@@ -185,7 +185,7 @@ data Game = Game
   , supply :: Supply, turn :: Int, maxTurns :: Int
   , doCardEffects :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => CardName -> m ()
   , endCndn :: Game -> Bool
-  }
+  } deriving (Typeable)
 -- negative maxTurns means unlimited turns
 
 instance Eq Game where
