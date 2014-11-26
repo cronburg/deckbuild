@@ -22,7 +22,7 @@ library
                      , Game.Sample.Sample, Game.DeckBuild.Dominion.Lib, Examples.UnitTests
                      , Examples.GreedySampler, Examples.GreedyMCMC, Examples.GreedyUnitTests
                      , Examples.First, Haskell.Macros, Game.Sample.Hakaru
-                     , Examples.GreedyInference
+                     , Examples.GreedyInference, Game.Monad
   -- other-modules:       
   other-extensions:    DeriveDataTypeable, RankNTypes, FlexibleInstances, FlexibleContexts,
                        KindSignatures, ScopedTypeVariables, NoMonomorphismRestriction,
