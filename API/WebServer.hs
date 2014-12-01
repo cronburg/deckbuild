@@ -177,10 +177,10 @@ module API.WebServer where
         return Nothing
       _ -> do
         strCards <- return (map show as)
+        WS.sendTextData conn (T.pack "What card would you like to play:")
+        msg <- WS.receiveData conn
         cardNToPlay <- case ( (T.unpack (T.toUpper msg)) `elemIndex` strCards) of
           Just n -> do
-            WS.sendTextData conn (T.pack "What card would you like to play:")
-            msg <- WS.receiveData conn
             broadcast (T.pack (((name . p1) g)) `mappend` " would like to play " `mappend` msg) clients
             return (Just (as !! n))
           Nothing -> do return Nothing
