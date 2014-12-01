@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 module API.WebServer where
-  -- TODO: Move this into an "AI" module under "Dominion"
 
   import Game.DeckBuild.Dominion.Lib
   import Game.DeckBuild.Dominion.Engine
@@ -122,6 +121,7 @@ module API.WebServer where
     case numClients clients of
       2 | whois client == (whois . head) clients -> do
                 execStateT runGame playerGame
+                broadcast (T.pack "~~~ Game Over ~~~") clients
                 return ()
         | otherwise ->
             return ()
