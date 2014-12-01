@@ -14,7 +14,7 @@ module API.CmdClient
   import qualified Data.Text           as T
   import qualified Data.Text.IO        as T
   import qualified Network.WebSockets  as WS
-
+  import           System.Console.Readline as RL
 
   --------------------------------------------------------------------------------
   app :: WS.ClientApp ()
@@ -28,9 +28,11 @@ module API.CmdClient
 
     -- Read from stdin and write to WS
     let loop = do{
-      line <- T.getLine
-      ; unless (T.null line) $ WS.sendTextData conn line >> loop
-      }
+      line <- RL.readline ""
+     ; case line of
+        Nothing -> return ()
+        Just s -> WS.sendTextData conn (T.pack s) >> loop
+    }
     loop
     WS.sendClose conn ("Bye!" :: Text)
 
@@ -39,5 +41,7 @@ module API.CmdClient
   main :: IO ()
   main = do
     liftIO $ T.putStrLn "Please enter the ip address of the game server or localhost:"
-    addr <- T.getLine
-    withSocketsDo $ WS.runClient (T.unpack addr) 9160 "/" app
+    addr <- RL.readline ""
+    case addr of
+      Nothing -> main
+      Just s -> withSocketsDo $ WS.runClient s 9160 "/" app
