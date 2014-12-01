@@ -120,8 +120,8 @@ module API.WebServer where
     clients <- liftIO $ readMVar state
     case numClients clients of
       2 | whois client == (whois . head) clients -> do
-                execStateT runGame playerGame
-                broadcast (T.pack "~~~ Game Over ~~~") clients
+                g' <- execStateT runGame playerGame
+                broadcast (T.pack ("Game over:" ++ show g')) clients
                 return ()
         | otherwise ->
             return ()
@@ -129,15 +129,14 @@ module API.WebServer where
          playerGame = defaultBaseGame
           { p1 = (fst . head) clients
           , p2 = (fst . last) clients
-          , maxTurns = 10
-          , endPrint = (myEndPrint clients)
+          , maxTurns = 2
           }
       _ -> return ()
 
     --msg <- WS.receiveData conn
-  myEndPrint clients g = liftIO $ do
+  {-myEndPrint clients g = liftIO $ do
       broadcast (T.pack $"end of game: " ++ show  g) clients
-      return ()
+      return ()-}
 
 
   whois :: Client -> Text

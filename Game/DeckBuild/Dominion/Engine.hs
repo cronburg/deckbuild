@@ -83,9 +83,7 @@ runGameLoop = do
     g <- get
     --if ((turn g) == 100) then return ()
     over <- gameOver
-    if over then do
-      (endPrint g) g
-      return ()
+    if over then do return ()
     else do runGameLoop
 
 -- Run the game:
