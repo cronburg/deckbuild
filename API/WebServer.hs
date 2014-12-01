@@ -15,7 +15,7 @@ module API.WebServer where
   import Language.Hakaru.Types -- Discrete
   import Language.Hakaru.Distribution
   import Control.Monad.State
-  import Data.List (maximumBy)
+  import Data.List (maximumBy, elemIndex)
   import Data.Ord (comparing)
   import Data.Char (isPunctuation, isSpace)
   import Data.Monoid (mappend)
@@ -87,80 +87,119 @@ module API.WebServer where
     msg <- WS.receiveData conn
     clients <- liftIO $ readMVar state
     case msg of
-              _   | any ($ (whois client))
-                      [T.null, T.any isPunctuation, T.any isSpace] ->
-                          WS.sendTextData conn ("Name cannot " `mappend`
-                              "contain punctuation or whitespace, and " `mappend`
-                              "cannot be empty" :: Text)
-                  | clientExists client clients ->
-                      WS.sendTextData conn ("User already exists" :: Text)
-                  | length clients >= 2 ->
-                      WS.sendTextData conn ("Too many players" :: Text)
-                  --success
-                  | otherwise -> flip finally disconnect $ do
-                    liftIO $ modifyMVar_ state $ \s -> do
-                      let s' = addClient client s
-                      WS.sendTextData conn $
-                        "Welcome! Users: " `mappend`
-                        T.intercalate ", " (map whois s)
-                      broadcast ((whois client) `mappend` " joined") s'
-                      return s'
-                    --talk conn state client
-                where
-                    client     = ((somePlayer (T.unpack msg) conn), conn)
-                    disconnect = do
-                          -- Remove client and return new state
-                          s <- modifyMVar state $ \s ->
-                              let s' = removeClient client s in return (s', s')
-                          broadcast ((whois client) `mappend` " disconnected") s
+          _   | any ($ (whois client))
+                  [T.null, T.any isPunctuation, T.any isSpace] ->
+                      WS.sendTextData conn ("Name cannot " `mappend`
+                          "contain punctuation or whitespace, and " `mappend`
+                          "cannot be empty" :: Text)
+              | clientExists client clients ->
+                  WS.sendTextData conn ("User already exists" :: Text)
+              | length clients >= 2 ->
+                  WS.sendTextData conn ("Too many players" :: Text)
+              --success
+              | otherwise -> flip finally disconnect $ do
+                liftIO $ modifyMVar_ state $ \s -> do
+                  let s' = addClient client s
+                  WS.sendTextData conn $
+                    "Welcome! Users: " `mappend`
+                    T.intercalate ", " (map whois s)
+                  broadcast ((whois client) `mappend` " joined") s'
+                  return s'
+                talk conn state client
+                --execStateT runGame playerGame
+            where
+              client     = ((somePlayer (T.unpack msg) state conn), conn)
+              disconnect = do
+                -- Remove client and return new state
+                s <- modifyMVar state $ \s ->
+                  let s' = removeClient client s in return (s', s')
+                broadcast ((whois client) `mappend` " disconnected") s
+
 
   talk :: WS.Connection -> MVar ServerState -> Client -> IO ()
   talk conn state client = forever $ do
-    msg <- WS.receiveData conn
-    liftIO $ readMVar state >>= broadcast
-      ((whois client) `mappend` ": " `mappend` msg)
+    clients <- liftIO $ readMVar state
+    case numClients clients of
+      2 | whois client == (whois . head) clients -> do
+                execStateT runGame playerGame
+                return ()
+        | otherwise ->
+            return ()
+       where
+         playerGame = defaultBaseGame
+          { p1 = (fst . head) clients
+          , p2 = (fst . last) clients
+          }
+      _ -> return ()
+
+    --msg <- WS.receiveData conn
 
   whois :: Client -> Text
   whois client = T.pack $ name $ fst client
 
   {- GAME LOGIC -}
-  somePlayer n conn = defaultPlayer
+  somePlayer n state conn = defaultPlayer
     { name = n
-    , buyHeuristic = (myBuyHeuristic conn)
-    , actHeuristic = (myActHeuristic conn)
-    , mayPick      = undefined
-    , mustPick     = undefined
+    , buyHeuristic = (myBuyHeuristic state conn)
+    , actHeuristic = (myActHeuristic state conn)
+    , mayPick      = greedyMayPick
+    , mustPick     = greedyMustPick
     }
 
-  myBuyHeuristic :: WS.Connection -> Game -> IO (Maybe CardName)
-  myBuyHeuristic conn g = do
+  myBuyHeuristic :: MVar ServerState -> WS.Connection -> Game -> IO (Maybe CardName)
+  myBuyHeuristic state conn g = do
     --ask the user what they want to buy
-    WS.sendTextData conn "Enter buy command or ? for help:"
+    clients <- liftIO $ readMVar state
+    cardsICanBuy <- return (filter (canBuy g) (map fst ((piles . supply) g)))
+    strCards <- return (map show cardsICanBuy)
+    WS.sendTextData conn (T.pack ("you have: " ++ show ((amtMoney . p1) g) ++ " monies and " ++ show ((numBuys . p1) g) ++ " buys, and can buy: " ++ show strCards ))
+    WS.sendTextData conn (T.pack "What card would you like to buy:")
     msg <- WS.receiveData conn
-    --case of
-    case msg of
-      -- ? ->
-      "?" ->
-        --print cards they can buy
-        WS.sendTextData conn "You may enter: buy <cardname> \n"
-        WS.sendTextData conn "Here is a list of cards you can buy:"
-        --print $ show $ (cards . supply) . g
-        WS.sendTextData conn "For a card's details, enter: ? <cardname>"
-        WS.sendTextData conn "For the contents of your hand, enter: hand"
-      -- hand
-      "hand" ->
-        WS.sendTextData conn ""
+    cardNToBuy <- case ( (T.unpack (T.toUpper msg)) `elemIndex` strCards) of
+      Just n -> do
+                   broadcast (T.pack (((name . p1) g)) `mappend` " would like to buy " `mappend` msg) clients
+                   return (Just (cardsICanBuy !! n))
+      Nothing -> do return Nothing
+    --cardsICanBuy !! ((T.unpack msg) `elemIndex` strCards)
+    --broadcast (T.pack (show g)) clients
 
-      -- ? cardname
-       -- case find ((==) (cID c)) kingdomeCards of
-         --Just card -> print info for card;
-         -- Nothing -> print "card not found"
+    return cardNToBuy
 
-  playerGame = defaultBaseGame
-    { p1 = somePlayer "Greedy1"
-    , p2 = somePlayer "Greedy2"
-    }
 
-  -- Run our simplistic greedy vs greedy game:
-  runPlayerGame :: MonadIO m => m Game
-  runPlayerGame = execStateT runGame playerGame
+  myActHeuristic :: MVar ServerState -> WS.Connection -> Game -> IO (Maybe CardName)
+  myActHeuristic state conn g = do
+    clients <- liftIO $ readMVar state
+    as <- return (filter isAction $ (cards.hand.p1) g)
+    WS.sendTextData conn (T.pack ("you can play: " ++ show as ++ "."))
+    case length as of
+      0 -> do
+        WS.sendTextData conn (T.pack ("There are no cards for you to play"))
+        return Nothing
+      _ -> do
+        strCards <- return (map show as)
+        cardNToPlay <- case ( (T.unpack (T.toUpper msg)) `elemIndex` strCards) of
+          Just n -> do
+            WS.sendTextData conn (T.pack "What card would you like to play:")
+            msg <- WS.receiveData conn
+            broadcast (T.pack (((name . p1) g)) `mappend` " would like to play " `mappend` msg) clients
+            return (Just (as !! n))
+          Nothing -> do return Nothing
+        return cardNToPlay
+
+
+  cellarPick g = maybeHead $ filter isVictory ((cards.hand.p1) g)
+  -- c' == the card which caused us to have to maybe pick a card
+  greedyMayPick :: Game -> CardName -> IO (Maybe CardName)
+  greedyMayPick g c' = return $ case c' of
+    CELLAR     -> cellarPick g -- pick a victory card in hand if exists
+    CHANCELLOR -> Just COPPER  -- any card triggers a discard deck
+    otherwise  -> Nothing
+
+  -- c' == the card which caused us to have to pick a card
+  greedyMustPick :: Game -> CardName -> IO CardName
+  greedyMustPick g c' = undefined
+
+    -- ? cardname
+     -- case find ((==) (cID c)) kingdomeCards of
+       --Just card -> print info for card;
+       -- Nothing -> print "card not found"
