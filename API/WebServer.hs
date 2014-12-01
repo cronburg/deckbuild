@@ -129,10 +129,16 @@ module API.WebServer where
          playerGame = defaultBaseGame
           { p1 = (fst . head) clients
           , p2 = (fst . last) clients
+          , maxTurns = 10
+          , endPrint = (myEndPrint clients)
           }
       _ -> return ()
 
     --msg <- WS.receiveData conn
+  myEndPrint clients g = liftIO $ do
+      broadcast (T.pack $"end of game: " ++ show  g) clients
+      return ()
+
 
   whois :: Client -> Text
   whois client = T.pack $ name $ fst client

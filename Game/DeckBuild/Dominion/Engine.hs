@@ -83,7 +83,9 @@ runGameLoop = do
     g <- get
     --if ((turn g) == 100) then return ()
     over <- gameOver
-    if over then do return ()
+    if over then do
+      (endPrint g) g
+      return ()
     else do runGameLoop
 
 -- Run the game:
@@ -92,4 +94,3 @@ runGame = do
     shuffleDrawSwap
     shuffleDrawSwap
     runGameLoop
-

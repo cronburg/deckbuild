@@ -49,7 +49,7 @@ canPlay g c = elem c ((cards . hand . p1) g)
 --shuffle :: forall m. MonadState Game m => m ()
 shuffleCards :: forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 shuffleCards = do
-    g <- get 
+    g <- get
     newDeck <- liftIO $ shuffleList $ ((cards . discardPile . p1) g) ++ ((cards . deck . p1) g)
     put g { p1 = (p1 g)
             { deck= ((deck.p1) g) {cards=newDeck}
@@ -62,7 +62,7 @@ shuffleCards = do
 draw :: forall (m :: * -> *). (MonadState Game m, MonadIO m) => Int -> m ()
 draw 0 = return ()
 draw n = do
-    g <- get 
+    g <- get
     let cs = (cards . deck . p1) g
     case () of
         _ | 0 == length cs -> do
@@ -70,8 +70,8 @@ draw n = do
                 draw n
           | otherwise -> do
                 put (g { p1 = (p1 g) { hand = ((hand.p1) g) { cards = (head cs) : ((cards . hand . p1) g) }
-                                     , deck = ((deck.p1) g) { cards = tail $ cs } }}) 
-                draw $ n - 1 
+                                     , deck = ((deck.p1) g) { cards = tail $ cs } }})
+                draw $ n - 1
 
 -- Player #1 discards a specific card from her hand
 -- TODO: Error handling when card is not in hand - probably use a Maybe
@@ -89,7 +89,7 @@ discard c = do
 -- Player #1 discards all remaining cards from her hand and play
 discardAll :: forall (m :: * -> *). MonadState Game m => m ()
 discardAll = do
-    g <- get 
+    g <- get
     let newDiscard = (cards . hand . p1) g ++ (cards . inPlay . p1) g ++ (cards . discardPile . p1) g
     put $ g { p1 = (p1 g)
               { hand        = ((hand.p1) g)        {cards=[]}
@@ -101,26 +101,26 @@ discardAll = do
 -- Player #1 and #2 swap places (i.e. p1 == current player)
 swapPlayers :: forall (m :: * -> *). MonadState Game m => m ()
 swapPlayers = do
-    g <- get 
-    put $ g { p1 = p2 g, p2 = p1 g } 
+    g <- get
+    put $ g { p1 = p2 g, p2 = p1 g }
 
 findAndDecr c (c',cnt') (c'',cnt'') = if c'' == c then (c'',cnt'' - 1) else (c',cnt')
 
 -- Player #1 buys card c, removing one from the supply and putting into her discard pile
 gain :: forall (m :: * -> *). MonadState Game m => CardName -> m ()
 gain c = do
-    g <- get 
+    g <- get
     let (c0,cnt0):ss = (piles . supply) g
-    let newPilePair = foldl (findAndDecr c) (c0,cnt0 - 1) ss    
+    let newPilePair = foldl (findAndDecr c) (c0,cnt0 - 1) ss
     let newSupply   = filter (\(c',_) -> c /= c') $ (piles . supply) g
     put $ g { supply=Supply { piles=newPilePair:newSupply }
             , p1 = (p1 g)
               { discardPile = ((discardPile.p1) g)
                 { cards = c : ((cards . discardPile . p1) g)
-                }   
+                }
               , amtMoney = ((amtMoney.p1) g) - (cost c)
-              }   
-            }   
+              }
+            }
 
 doBasicEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Effect -> m ()
 doBasicEffect e = do
@@ -155,7 +155,7 @@ countMoney [] = 0
 countMoney (c:cs)
   | length ((primary.cDescr) (getCard kcs c)) == 0 = undefined -- TODO: invalid treasure card
   | isTreasure c = (amount.head.primary.cDescr) (getCard kcs c) + countMoney cs
-  | otherwise    = countMoney cs 
+  | otherwise    = countMoney cs
 --countMoney (COPPER:xs) = 1 + countMoney xs
 --countMoney (SILVER:xs) = 2 + countMoney xs
 --countMoney (GOLD:xs)   = 3 + countMoney xs
@@ -165,7 +165,7 @@ countMoney (c:cs)
 -- Player #1 players all of her money:
 playMoney :: forall (m :: * -> *). MonadState Game m => m ()
 playMoney = do
-    g <- get 
+    g <- get
     let newInPlay   = (filterMoney    $ (cards . hand . p1) g) ++ (cards . inPlay . p1) g
     let newHand     = filterNotMoney $ (cards . hand . p1) g
     let newAmtMoney = ((amtMoney . p1) g) + (countMoney newInPlay)
@@ -173,15 +173,15 @@ playMoney = do
               { inPlay = ((inPlay.p1) g) { cards=newInPlay }
               , hand   = ((hand.p1) g) { cards=newHand }
               , amtMoney = newAmtMoney
-              }   
-            }   
+              }
+            }
 -}
 
 -- Decrements the number of buys player #1 has by n
 decrBuys :: forall (m :: * -> *). (MonadState Game m, MonadIO m) => Int -> m ()
 decrBuys n = do
-  g <- get 
-  put $ g { p1 = (p1 g) { numBuys = (numBuys . p1) g - n } } 
+  g <- get
+  put $ g { p1 = (p1 g) { numBuys = (numBuys . p1) g - n } }
 
 countVictory :: [CardName] -> Int
 countVictory [] = 0
@@ -197,7 +197,6 @@ countVictory (c:cs)
 -- Game is over if ending condition is true, or turns ran out:
 gameOver :: forall (m :: * -> *). MonadState Game m => m Bool
 gameOver = do
-    g <- get 
+    g <- get
     return $ (endCndn g) g ||
-             ((turn g >= 0) && (turn g > maxTurns g)) 
-
+             ((turn g >= 0) && (turn g > maxTurns g))
