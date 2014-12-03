@@ -1,3 +1,4 @@
 [submodule "deckbuild-language"]
 	path = deckbuild-language
-	url = git@github.cs.tufts.edu:COMP150PLD-DeckBuildingDSL/COMP150PLD-DeckBuildingDSL.git
+#	url = git@github.cs.tufts.edu:COMP150PLD-DeckBuildingDSL/COMP150PLD-DeckBuildingDSL.git
+	url = git@github.com:cronburg/deckbuild-lang.git
