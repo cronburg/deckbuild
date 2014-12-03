@@ -7,7 +7,7 @@ import Language.Hakaru.Metropolis hiding (sample)
 import Language.Hakaru.Types -- Discrete
 import Language.Hakaru.Distribution
 
-import System.Random.Shuffle (shuffle')
+import System.Random.Shuffle (shuffle,shuffle')
 import System.Random (newStdGen)
 import Data.Typeable (Typeable)
 
@@ -56,9 +56,12 @@ uniformInt mn' mx' = do
 shuffleList :: (Typeable a, Eq a) => [a] -> IS.Measure [a]
 shuffleList []     = uncnd $ categorical [([],1)]
 shuffleList (x:[]) = uncnd $ categorical [([x],1)]
-shuffleList (x:xs) = do
-  p   <- uniformInt 0 $ (length xs) + 1 -- partition
-  lhs <- shuffleList (take p xs) -- shuffle left of partition
-  rhs <- shuffleList (drop p xs) -- shuffle right of partition
-  return $ lhs ++ [x] ++ rhs     -- merge partitions
+shuffleList xs     = do
+  us <- sequence [uniformInt 0 ((length xs) - i + 1) | i <- [1..(length xs)-1]]
+  return $ shuffle xs us
+--shuffleList (x:xs) = do
+--  p   <- uniformInt 0 $ (length xs) + 1 -- partition
+--  lhs <- shuffleList (take p xs) -- shuffle left of partition
+--  rhs <- shuffleList (drop p xs) -- shuffle right of partition
+--  return $ lhs ++ [x] ++ rhs     -- merge partitions
 
