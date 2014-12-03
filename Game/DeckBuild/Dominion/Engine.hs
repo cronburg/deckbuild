@@ -92,4 +92,3 @@ runGame = do
     shuffleDrawSwap
     shuffleDrawSwap
     runGameLoop
-

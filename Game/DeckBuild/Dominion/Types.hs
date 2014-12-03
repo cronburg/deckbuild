@@ -11,7 +11,7 @@ import Language.DeckBuild.Syntax hiding (Card, cID, cType, cDescr, cCost)
 import Examples.BaseQuote
 
 -- Kingdom RuntimeCardclass type
--- (Eq a, Ord a, Typeable a, Show a, Enum a) => 
+-- (Eq a, Ord a, Typeable a, Show a, Enum a) =>
 
 {-
 data RuntimeCard=
@@ -73,7 +73,7 @@ iCards = -- Intrigue Cards:
 
 -- TODO: error condition
 getCard :: [RuntimeCard] -> CardName -> RuntimeCard
-getCard cs n = 
+getCard cs n =
   --case reify $ mkName (show n) of
   case find (\(RuntimeCard {cID = cid}) -> cid == n) cs of
     Just c  -> c
@@ -195,7 +195,7 @@ instance Ord Game where
   g <= g' = turn g <= turn g'
 
 instance Show Game where
-  show (Game { p1 = p1, p2 = p2, trash = trash, supply = s, turn = turn }) = 
+  show (Game { p1 = p1, p2 = p2, trash = trash, supply = s, turn = turn }) =
     "Player1:\n" ++ (show p1)    ++ "\n" ++
     "Player2:\n" ++ (show p2)    ++ "\n" ++
     "Trash: "    ++ (show trash) ++ "\n" ++ -- show trash in order trashed
@@ -246,4 +246,3 @@ defaultGame = Game
   , doCardEffects=(\c -> return ())
   , endCndn = undefined -- TODO: is there a good default end condition without knowing any cards?
   }
-
