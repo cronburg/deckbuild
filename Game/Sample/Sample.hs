@@ -48,8 +48,17 @@ uniformInt mn' mx' = do
 --shuffleCards' d = sample1 (shuffleC' d []) []
 
 -- Shuffling using System.Random:
-shuffleList d = do
-    g <- newStdGen -- TODO: keep random gen in game data type
-    return $ shuffle' d (length d) g
+--shuffleList :: [a] -> IO [a]
+--shuffleList d = do
+--    g <- newStdGen -- TODO: keep random gen in game data type
+--    return $ shuffle' d (length d) g
 
+shuffleList :: (Typeable a, Eq a) => [a] -> IS.Measure [a]
+shuffleList []     = uncnd $ categorical [([],1)]
+shuffleList (x:[]) = uncnd $ categorical [([x],1)]
+shuffleList (x:xs) = do
+  p   <- uniformInt 0 $ (length xs) + 1 -- partition
+  lhs <- shuffleList (take p xs) -- shuffle left of partition
+  rhs <- shuffleList (drop p xs) -- shuffle right of partition
+  return $ lhs ++ [x] ++ rhs     -- merge partitions
 
