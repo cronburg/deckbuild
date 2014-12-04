@@ -5,7 +5,7 @@ module Examples.First where
 import Game.DeckBuild.Dominion.Lib
 import Game.DeckBuild.Dominion.Engine
 import Game.DeckBuild.Dominion.Types
-import Game.Sample.Sample
+import Game.Sample.Sample (sample1)
 import Examples.Base
 import Examples.Greedy
 
@@ -20,6 +20,6 @@ import Data.Ord (comparing)
 
 import System.IO.Unsafe (unsafePerformIO)
 
-test = unsafePerformIO runGreedy
+test = unsafePerformIO $ sample1 runGreedy []
 
 

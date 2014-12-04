@@ -1,6 +1,9 @@
 {-# LANGUAGE RankNTypes, NoMonomorphismRestriction, BangPatterns #-}
 {-# OPTIONS -W #-}
-module Game.Sample.Hakaru where
+module Game.Sample.Hakaru
+  ( Measure
+  , sample
+  ) where
 
 import Language.Hakaru.Types
 import Language.Hakaru.Mixture (Prob)
@@ -12,6 +15,13 @@ import System.IO.Unsafe
 import qualified Data.Map.Strict as M
 
 import Language.Hakaru.ImportanceSampler hiding (sample)
+
+--import Control.Monad.State
+--instance (MonadState Game) Measure
+--instance MonadIO Measure
+
+--instance MonadIO Measure where
+--  liftIO = liftIO
 
 -- Taken from ImportanceSampler.hs in Hakaru (need to modify slightly):
 sample :: Measure a -> [Cond] -> IO [(a, Prob)]

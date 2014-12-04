@@ -91,26 +91,28 @@ greedyGame ps = defaultBaseGame
   , p2 = greedyPlayer ps "Greedy2"
   }
 
-runGreedy :: MonadIO m => (Double,Double) -> m Game
-runGreedy ps = execStateT runGame $ greedyGame ps
+runGreedy :: (Double,Double) -> IS.Measure Game --MonadIO m => (Double,Double) -> m Game
+runGreedy ps = put (greedyGame ps) >> runGame >> get >>= return
 
-logprob :: MonadIO m => (Double,Double) -> m Double
+logprob :: (Double,Double) -> IS.Measure Double --MonadIO m => (Double,Double) -> m Double
 logprob ps = do
   g <- runGreedy ps
   return $ 0 - (fI $ turn g)
 
 -------------------------------------------------------------------------------
 -- Top-level functions
-greedyModel :: Measure Double
+greedyModel :: IS.Measure Double
 greedyModel = do
-  param0 <- unconditioned $ uniform 0 1 
+  param0 <- uncnd $ uniform 0 1 
   let param1 = 1 - param0
-  let g = unsafePerformIO $ runGreedy (param0,param1)
-  turns <- conditioned $ categorical [(turn g, 1.0)]
+  runGreedy (param0,param1)
+  g <- get
+  turns <- cnd $ categorical [(turn g, 1.0)]
   return $ param0
 
 main n = do
-  --samples <- IS.empiricalMeasure 10 greedyModel [
-  samples <- mcmc greedyModel $ [Just (toDyn (Discrete (36 :: Int)))]
-  return $ take n samples
+  mixture <- IS.empiricalMeasure 10 greedyModel []
+  return mixture
+  --samples <- mcmc greedyModel $ [Just (toDyn (Discrete (36 :: Int)))]
+  --return $ take n samples
 

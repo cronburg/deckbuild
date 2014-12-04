@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable, RankNTypes, FlexibleInstances, FlexibleContexts,
-             KindSignatures, ScopedTypeVariables #-}
+             KindSignatures, ScopedTypeVariables, MultiParamTypeClasses #-}
 module Game.DeckBuild.Dominion.Types where
 
 import Data.Typeable
@@ -9,6 +9,8 @@ import Data.Ord (comparing)
 
 import Language.DeckBuild.Syntax hiding (Card, cID, cType, cDescr, cCost)
 import Examples.BaseQuote
+
+import Game.Sample.Hakaru
 
 -- Kingdom RuntimeCardclass type
 -- (Eq a, Ord a, Typeable a, Show a, Enum a) => 
@@ -183,7 +185,7 @@ instance Show Player where
 data Game = Game
   { p1 :: Player, p2 :: Player, trash :: Pile
   , supply :: Supply, turn :: Int, maxTurns :: Int
-  , doCardEffects :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => CardName -> m ()
+  , doCardEffects :: CardName -> Measure () --forall (m :: * -> *). (MonadIO m, MonadState Game m) => CardName -> m ()
   , endCndn :: Game -> Bool
   } deriving (Typeable)
 -- negative maxTurns means unlimited turns
@@ -201,6 +203,11 @@ instance Show Game where
     "Trash: "    ++ (show trash) ++ "\n" ++ -- show trash in order trashed
     "Supply: "   ++ (show s)     ++ "\n" ++ -- show supply cards in order of cost
     "Turn #: "   ++ (show turn)  ++ "\n"
+
+-- TODO: ...?
+instance MonadState Game Measure
+instance MonadIO Measure where
+  liftIO = liftIO
 
 nullHeuristic :: Heuristic (Maybe a)
 nullHeuristic = const (return Nothing)

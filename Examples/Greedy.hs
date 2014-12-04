@@ -108,6 +108,10 @@ greedyGame = defaultBaseGame
   }
 
 -- Run our simplistic greedy vs greedy game:
-runGreedy :: MonadIO m => m Game
-runGreedy = execStateT runGame greedyGame
+runGreedy :: IS.Measure Game --MonadIO m => m Game
+runGreedy = runGame >> get >>= return
+--execStateT runGame greedyGame
+--  runGame
+--  g <- get
+--  return g
 

@@ -8,6 +8,7 @@ module Game.DeckBuild.Dominion.Engine where
 import Game.DeckBuild.Dominion.Lib
 import Game.DeckBuild.Dominion.Types
 
+import Game.Sample.Hakaru
 import Game.Sample.Sample
 import Control.Monad.State
 
@@ -22,7 +23,7 @@ doPhase numThing thingHeuristic addThing canDo doCard isThing = do
       Nothing -> return ()
 
 -- TODO: Run actHeuristic of player #1:
-actionPhase :: forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+actionPhase :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 actionPhase = doPhase numActions actHeuristic addActions canPlay playCard isAction
 {-
   g <- get
@@ -36,7 +37,7 @@ actionPhase = doPhase numActions actHeuristic addActions canPlay playCard isActi
     return ()
 -}
 
-buyPhase :: forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+buyPhase :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 buyPhase = doPhase numBuys buyHeuristic addBuys canBuy gain isSupply
 {-
   g <- get
@@ -54,12 +55,12 @@ buyPhase = doPhase numBuys buyHeuristic addBuys canBuy gain isSupply
       Nothing -> return ()
 -}
 
-moneyPhase :: forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+moneyPhase :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 moneyPhase = doPhase (countMoney . cards . hand) moneyHeuristic (const $ return ())
                       canPlay playCard isTreasure
 
 -- Executes all phases of player #1's turn:
-takeTurn :: forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+takeTurn :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 takeTurn = do
     actionPhase
     moneyPhase
@@ -70,13 +71,13 @@ takeTurn = do
     put $ g { p1 = (p1 g) { numActions=1, numBuys=1, amtMoney=0 },
               turn = (turn g) + 1}
 
-shuffleDrawSwap :: forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+shuffleDrawSwap :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 shuffleDrawSwap = do
     shuffleCards
     draw 5
     swapPlayers
 
-runGameLoop :: forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+runGameLoop :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 runGameLoop = do
     takeTurn
     swapPlayers
@@ -87,7 +88,7 @@ runGameLoop = do
     else do runGameLoop
 
 -- Run the game:
-runGame :: forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+runGame :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 runGame = do
     shuffleDrawSwap
     shuffleDrawSwap

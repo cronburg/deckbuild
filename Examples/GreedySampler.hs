@@ -85,10 +85,11 @@ greedyGame ps = defaultBaseGame
   , p2 = greedyPlayer ps "Greedy2"
   }
 
-runGreedy :: MonadIO m => (Double,Double) -> m Game
-runGreedy ps = execStateT runGame $ greedyGame ps
+runGreedy :: (Double,Double) -> IS.Measure Game --MonadIO m => (Double,Double) -> m Game
+runGreedy ps = put (greedyGame ps) >> runGame >> get >>= return
+--execStateT runGame $ greedyGame ps
 
-logprob :: MonadIO m => (Double,Double) -> m Double
+logprob :: (Double,Double) -> IS.Measure Double --MonadIO m => (Double,Double) -> m Double
 logprob ps = do
   g <- runGreedy ps
   return $ 0 - (fI $ turn g)

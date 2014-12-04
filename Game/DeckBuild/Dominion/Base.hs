@@ -8,9 +8,10 @@ import Data.Char (toUpper)
 import Language.DeckBuild.Syntax hiding (Card, cID, cType, cDescr, cCost)
 
 import Examples.BaseQuote
+import Game.Sample.Hakaru
 
 -- Discards any number of cards, returning the number of cards discarded
-cellarEffect' :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m Int
+cellarEffect' :: Measure Int 
 cellarEffect' = do
   g  <- get
   c' <- liftIO $ ((mayPick.p1) g) g CELLAR
@@ -21,12 +22,12 @@ cellarEffect' = do
     Nothing -> return 0
 
 -- Discard any number of cards, then draw that many cards:
-cellarEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+cellarEffect :: Measure () 
 cellarEffect = addActions 1 >> cellarEffect' >>= \n -> draw n
 
 -- Trash up to 4 cards
 -- n == # of cards trashed so far
-chapelEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Int -> m Int
+chapelEffect :: Int -> Measure Int 
 chapelEffect 4 = return 0
 chapelEffect n = do
   g  <- get
@@ -38,7 +39,7 @@ chapelEffect n = do
     Nothing -> return 0
 
 -- +2 money, may put deck into discard pile
-chancellorEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+chancellorEffect :: Measure () 
 chancellorEffect = do
   addMoney 2
   g  <- get
@@ -50,58 +51,58 @@ chancellorEffect = do
         , discardPile = (discardPile.p1 $ g) { cards=(cards.deck.p1 $ g) ++ (cards.discardPile.p1 $ g) } } }
     Nothing -> return ()
 
-workshopEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+workshopEffect :: Measure () 
 workshopEffect = undefined
 
-bureaucratEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+bureaucratEffect :: Measure () 
 bureaucratEffect = undefined 
 
-feastEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+feastEffect :: Measure () 
 feastEffect = undefined
  
-militiaEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+militiaEffect :: Measure () 
 militiaEffect = undefined 
 
-moneylenderEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+moneylenderEffect :: Measure () 
 moneylenderEffect = undefined 
 
-remodelEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+remodelEffect :: Measure () 
 remodelEffect = undefined 
 
-smithyEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+smithyEffect :: Measure () 
 smithyEffect = undefined
  
-spyEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+spyEffect :: Measure () 
 spyEffect = undefined 
 
-thiefEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+thiefEffect :: Measure () 
 thiefEffect = undefined
 
-throneRoomEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+throneRoomEffect :: Measure () 
 throneRoomEffect = undefined 
 
-councilRoomEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+councilRoomEffect :: Measure () 
 councilRoomEffect = undefined
  
-laboratoryEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+laboratoryEffect :: Measure () 
 laboratoryEffect = undefined 
 
-libraryEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+libraryEffect :: Measure () 
 libraryEffect = undefined
  
-marketEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+marketEffect :: Measure () 
 marketEffect = undefined
  
-mineEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+mineEffect :: Measure () 
 mineEffect = undefined
  
-witchEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+witchEffect :: Measure () 
 witchEffect = undefined
  
-adventurerEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => m ()
+adventurerEffect :: Measure () 
 adventurerEffect = undefined 
 
-baseCardEffects :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => CardName -> m ()
+baseCardEffects :: CardName -> Measure ()
 baseCardEffects c = case c of
   CELLAR     -> cellarEffect
   CHAPEL     -> chapelEffect 0 >> return ()

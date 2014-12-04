@@ -17,6 +17,7 @@ import Data.List (delete, find)
 import Data.Char (toUpper)
 
 import Examples.BaseQuote
+import Game.Sample.Hakaru (Measure)
 -------------------------------------------------------------------------------
 
 addMoney :: forall (m :: * -> *). MonadState Game m => Int -> m ()
@@ -47,10 +48,10 @@ canPlay g c = elem c ((cards . hand . p1) g)
 
 -- Takes all of player #1's discarded cards and shuffles them back into her deck:
 --shuffle :: forall m. MonadState Game m => m ()
-shuffleCards :: forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+shuffleCards :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 shuffleCards = do
-    g <- get 
-    newDeck <- liftIO $ shuffleList $ ((cards . discardPile . p1) g) ++ ((cards . deck . p1) g)
+    g <- get
+    newDeck <- shuffleList $ ((cards . discardPile . p1) g) ++ ((cards . deck . p1) g)
     put g { p1 = (p1 g)
             { deck= ((deck.p1) g) {cards=newDeck}
             , discardPile=((discardPile.p1) g) {cards=[]}
@@ -59,7 +60,7 @@ shuffleCards = do
 
 -- Player #1 draws n cards from her deck
 --draw :: Int -> State (GameState Game) ()
-draw :: forall (m :: * -> *). (MonadState Game m, MonadIO m) => Int -> m ()
+draw :: Int -> Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => Int -> m ()
 draw 0 = return ()
 draw n = do
     g <- get 
@@ -122,7 +123,7 @@ gain c = do
               }   
             }   
 
-doBasicEffect :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => Effect -> m ()
+doBasicEffect :: Effect -> Measure () --forall (m :: * -> *). (MonadIO m, MonadState Game m) => Effect -> m ()
 doBasicEffect e = do
   g <- get
   case effectType e of
@@ -132,7 +133,7 @@ doBasicEffect e = do
     CARDS         -> draw       $ (amount e)
     VICTORYPOINTS -> nop -- TODO: ???
 
-playCard :: forall (m :: * -> *). (MonadIO m, MonadState Game m) => CardName -> m ()
+playCard :: CardName -> Measure () --forall (m :: * -> *). (MonadIO m, MonadState Game m) => CardName -> m ()
 playCard c = do
   g <- get
   let c0:cs   = (cards . hand . p1) g

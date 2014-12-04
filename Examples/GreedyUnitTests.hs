@@ -9,6 +9,7 @@ import Game.DeckBuild.Dominion.Lib
 import Game.DeckBuild.Dominion.Base (baseCardEffects)
 import Control.Monad.State
 import System.IO.Unsafe (unsafePerformIO)
+import Game.Sample.Sample (sample1)
 
 import Examples.BaseQuote
 
@@ -21,6 +22,6 @@ firstHandGame = defaultGame
 
 -- Greedy CELLAR player should discard all three victory cards in her hand:
 gTest0 =
-  let g = unsafePerformIO $ execStateT (baseCardEffects CELLAR) greedyGame
+  let g = unsafePerformIO $ sample1 (put greedyGame >> baseCardEffects CELLAR >> get >>= return) []
   in [elem c ((cards.discardPile.p1) g) | c <- [ESTATE,DUCHY,PROVINCE]]
 
