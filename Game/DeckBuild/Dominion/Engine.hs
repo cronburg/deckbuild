@@ -15,7 +15,7 @@ import Control.Monad.State
 doPhase numThing thingHeuristic addThing canDo doCard isThing = do
   g <- get
   if (numThing . p1) g == 0 then return () else do
-    c' <- liftIO $ ((thingHeuristic.p1) g) g
+    c' <- lift $ ((thingHeuristic.p1) g) g
     case c' of
       Just c  -> do
         if (isThing c) && (canDo g c) then addThing (-1) >> doCard c else return ()
@@ -23,7 +23,7 @@ doPhase numThing thingHeuristic addThing canDo doCard isThing = do
       Nothing -> return ()
 
 -- TODO: Run actHeuristic of player #1:
-actionPhase :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+actionPhase :: STMeasure Game () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 actionPhase = doPhase numActions actHeuristic addActions canPlay playCard isAction
 {-
   g <- get
@@ -37,7 +37,7 @@ actionPhase = doPhase numActions actHeuristic addActions canPlay playCard isActi
     return ()
 -}
 
-buyPhase :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+buyPhase :: STMeasure Game () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 buyPhase = doPhase numBuys buyHeuristic addBuys canBuy gain isSupply
 {-
   g <- get
@@ -55,12 +55,12 @@ buyPhase = doPhase numBuys buyHeuristic addBuys canBuy gain isSupply
       Nothing -> return ()
 -}
 
-moneyPhase :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+moneyPhase :: STMeasure Game () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 moneyPhase = doPhase (countMoney . cards . hand) moneyHeuristic (const $ return ())
                       canPlay playCard isTreasure
 
 -- Executes all phases of player #1's turn:
-takeTurn :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+takeTurn :: STMeasure Game () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 takeTurn = do
     actionPhase
     moneyPhase
@@ -71,13 +71,13 @@ takeTurn = do
     put $ g { p1 = (p1 g) { numActions=1, numBuys=1, amtMoney=0 },
               turn = (turn g) + 1}
 
-shuffleDrawSwap :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+shuffleDrawSwap :: STMeasure Game () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 shuffleDrawSwap = do
     shuffleCards
     draw 5
     swapPlayers
 
-runGameLoop :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+runGameLoop :: STMeasure Game () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 runGameLoop = do
     takeTurn
     swapPlayers
@@ -88,7 +88,7 @@ runGameLoop = do
     else do runGameLoop
 
 -- Run the game:
-runGame :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+runGame :: STMeasure Game () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 runGame = do
     shuffleDrawSwap
     shuffleDrawSwap

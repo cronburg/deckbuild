@@ -11,10 +11,10 @@ import Examples.BaseQuote
 import Game.Sample.Hakaru
 
 -- Discards any number of cards, returning the number of cards discarded
-cellarEffect' :: Measure Int 
+cellarEffect' :: STMeasure Game Int 
 cellarEffect' = do
   g  <- get
-  c' <- liftIO $ ((mayPick.p1) g) g CELLAR
+  c' <- lift $ ((mayPick.p1) g) g CELLAR
   case c' of
     Just c  -> if   elem c ((cards.hand.p1) g)
                then discard c >> cellarEffect' >>= \n -> return $ n + 1
@@ -22,16 +22,16 @@ cellarEffect' = do
     Nothing -> return 0
 
 -- Discard any number of cards, then draw that many cards:
-cellarEffect :: Measure () 
+cellarEffect :: STMeasure Game () 
 cellarEffect = addActions 1 >> cellarEffect' >>= \n -> draw n
 
 -- Trash up to 4 cards
 -- n == # of cards trashed so far
-chapelEffect :: Int -> Measure Int 
+chapelEffect :: Int -> STMeasure Game Int 
 chapelEffect 4 = return 0
 chapelEffect n = do
   g  <- get
-  c' <- liftIO $ ((mayPick.p1) g) g CHAPEL
+  c' <- lift $ ((mayPick.p1) g) g CHAPEL
   case c' of
     Just c  -> if   elem c ((cards.hand.p1) g)
                then trashCard c >> chapelEffect (n + 1) >>= \n' -> return $ n' + 1
@@ -39,11 +39,11 @@ chapelEffect n = do
     Nothing -> return 0
 
 -- +2 money, may put deck into discard pile
-chancellorEffect :: Measure () 
+chancellorEffect :: STMeasure Game () 
 chancellorEffect = do
   addMoney 2
   g  <- get
-  c' <- liftIO $ ((mayPick.p1) g) g CHANCELLOR
+  c' <- lift $ ((mayPick.p1) g) g CHANCELLOR
   case c' of
     Just _  ->
       put $ g { p1 = (p1 g)
@@ -51,58 +51,58 @@ chancellorEffect = do
         , discardPile = (discardPile.p1 $ g) { cards=(cards.deck.p1 $ g) ++ (cards.discardPile.p1 $ g) } } }
     Nothing -> return ()
 
-workshopEffect :: Measure () 
+workshopEffect :: STMeasure Game () 
 workshopEffect = undefined
 
-bureaucratEffect :: Measure () 
+bureaucratEffect :: STMeasure Game () 
 bureaucratEffect = undefined 
 
-feastEffect :: Measure () 
+feastEffect :: STMeasure Game () 
 feastEffect = undefined
  
-militiaEffect :: Measure () 
+militiaEffect :: STMeasure Game () 
 militiaEffect = undefined 
 
-moneylenderEffect :: Measure () 
+moneylenderEffect :: STMeasure Game () 
 moneylenderEffect = undefined 
 
-remodelEffect :: Measure () 
+remodelEffect :: STMeasure Game () 
 remodelEffect = undefined 
 
-smithyEffect :: Measure () 
+smithyEffect :: STMeasure Game () 
 smithyEffect = undefined
  
-spyEffect :: Measure () 
+spyEffect :: STMeasure Game () 
 spyEffect = undefined 
 
-thiefEffect :: Measure () 
+thiefEffect :: STMeasure Game () 
 thiefEffect = undefined
 
-throneRoomEffect :: Measure () 
+throneRoomEffect :: STMeasure Game () 
 throneRoomEffect = undefined 
 
-councilRoomEffect :: Measure () 
+councilRoomEffect :: STMeasure Game () 
 councilRoomEffect = undefined
  
-laboratoryEffect :: Measure () 
+laboratoryEffect :: STMeasure Game () 
 laboratoryEffect = undefined 
 
-libraryEffect :: Measure () 
+libraryEffect :: STMeasure Game () 
 libraryEffect = undefined
  
-marketEffect :: Measure () 
+marketEffect :: STMeasure Game () 
 marketEffect = undefined
  
-mineEffect :: Measure () 
+mineEffect :: STMeasure Game () 
 mineEffect = undefined
  
-witchEffect :: Measure () 
+witchEffect :: STMeasure Game () 
 witchEffect = undefined
  
-adventurerEffect :: Measure () 
+adventurerEffect :: STMeasure Game () 
 adventurerEffect = undefined 
 
-baseCardEffects :: CardName -> Measure ()
+baseCardEffects :: CardName -> STMeasure Game ()
 baseCardEffects c = case c of
   CELLAR     -> cellarEffect
   CHAPEL     -> chapelEffect 0 >> return ()

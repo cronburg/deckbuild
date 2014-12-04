@@ -62,17 +62,17 @@ bestBuy g = do
         wantCard g c && canBuy g c]           -- Buy conditions
     return card
 
-greedyBuy :: Game -> IO (Maybe CardName)
+greedyBuy :: Game -> IS.Measure (Maybe CardName)
 greedyBuy g = do
-  wantACard <- sample1 (wantToBuy g) []
+  wantACard <- wantToBuy g
   if wantACard then do
     --c <- liftIO $ sample1 (bestBuy g) []
-    c <- sample1 (bestBuy g) []
+    c <- bestBuy g
     return $ Just c
   else
     return $ Nothing
 
-greedyAct :: Game -> IO (Maybe CardName)
+greedyAct :: Game -> IS.Measure (Maybe CardName)
 greedyAct g = do
   let as = filter isAction $ (cards.hand.p1) g
   case length as of
@@ -84,14 +84,14 @@ greedyAct g = do
 cellarPick g = maybeHead $ filter isVictory ((cards.hand.p1) g)
 
 -- c' == the card which caused us to have to maybe pick a card
-greedyMayPick :: Game -> CardName -> IO (Maybe CardName)
+greedyMayPick :: Game -> CardName -> IS.Measure (Maybe CardName)
 greedyMayPick g c' = return $ case c' of
   CELLAR     -> cellarPick g -- pick a victory card in hand if exists
   CHANCELLOR -> Just COPPER  -- any card triggers a discard deck
   otherwise  -> Nothing
 
 -- c' == the card which caused us to have to pick a card
-greedyMustPick :: Game -> CardName -> IO CardName
+greedyMustPick :: Game -> CardName -> IS.Measure CardName
 greedyMustPick g c' = undefined
 
 greedyPlayer n = defaultPlayer
@@ -109,7 +109,7 @@ greedyGame = defaultBaseGame
 
 -- Run our simplistic greedy vs greedy game:
 runGreedy :: IS.Measure Game --MonadIO m => m Game
-runGreedy = runGame >> get >>= return
+runGreedy = execStateT runGame greedyGame --(runGame >> get >>= return)
 --execStateT runGame greedyGame
 --  runGame
 --  g <- get

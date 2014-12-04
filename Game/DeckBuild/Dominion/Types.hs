@@ -4,6 +4,7 @@ module Game.DeckBuild.Dominion.Types where
 
 import Data.Typeable
 import Control.Monad.State
+import qualified Control.Monad.Trans as TRANS
 import Data.List
 import Data.Ord (comparing)
 
@@ -11,6 +12,10 @@ import Language.DeckBuild.Syntax hiding (Card, cID, cType, cDescr, cCost)
 import Examples.BaseQuote
 
 import Game.Sample.Hakaru
+import Language.Hakaru.Mixture (point)
+import Language.Hakaru.Sampler (deterministic)
+import Language.Hakaru.ImportanceSampler (Measure(..))
+import System.IO.Unsafe (unsafePerformIO)
 
 -- Kingdom RuntimeCardclass type
 -- (Eq a, Ord a, Typeable a, Show a, Enum a) => 
@@ -156,8 +161,8 @@ instance Show Supply where
 -- action to perform based on the current game state. For now (a == Card)
 -- is the only interesting instance of this type (i.e. buy and action
 -- heuristics both produce a card).
-type Heuristic a = Game -> IO a
-type PickHeuristic b a = Game -> b -> IO a
+type Heuristic a = Game -> Measure a
+type PickHeuristic b a = Game -> b -> Measure a
 
 data Player = Player
   { name :: String, hand :: Pile, deck :: Pile, discardPile :: Pile
@@ -185,7 +190,7 @@ instance Show Player where
 data Game = Game
   { p1 :: Player, p2 :: Player, trash :: Pile
   , supply :: Supply, turn :: Int, maxTurns :: Int
-  , doCardEffects :: CardName -> Measure () --forall (m :: * -> *). (MonadIO m, MonadState Game m) => CardName -> m ()
+  , doCardEffects :: CardName -> STMeasure Game () --forall (m :: * -> *). (MonadIO m, MonadState Game m) => CardName -> m ()
   , endCndn :: Game -> Bool
   } deriving (Typeable)
 -- negative maxTurns means unlimited turns
@@ -204,10 +209,17 @@ instance Show Game where
     "Supply: "   ++ (show s)     ++ "\n" ++ -- show supply cards in order of cost
     "Turn #: "   ++ (show turn)  ++ "\n"
 
+-- (a,b) where (a == result type) and (Measure b == state type)
+type STMeasure a b = StateT a Measure b
+
 -- TODO: ...?
-instance MonadState Game Measure
-instance MonadIO Measure where
-  liftIO = liftIO
+--instance MonadState Game Measure
+--instance MonadIO Measure where
+--  liftIO x =
+--    let x' = unsafePerformIO x
+--    in  Measure (\conds -> deterministic (point (x', conds) 1))
+  --  x' <- TRANS.liftIO x
+  --  Measure (\conds -> deterministic (point (x', conds) 1))
 
 nullHeuristic :: Heuristic (Maybe a)
 nullHeuristic = const (return Nothing)

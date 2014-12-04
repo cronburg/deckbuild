@@ -44,16 +44,16 @@ sampleBuy ps g = do
         (cardValue ps g c) > 0.0 && canBuy g c]  -- Buy conditions
     return card
 
-greedyBuy :: (Double,Double) -> Game -> IO (Maybe CardName)
+greedyBuy :: (Double,Double) -> Game -> IS.Measure (Maybe CardName)
 greedyBuy ps g = do
-  wantACard <- sample1 (wantToBuy g) []
+  wantACard <- wantToBuy g
   if wantACard then do
-    c <- sample1 (sampleBuy ps g) []
+    c <- sampleBuy ps g
     return $ Just c
   else
     return $ Nothing
 
-greedyAct :: Game -> IO (Maybe CardName)
+greedyAct :: Game -> IS.Measure (Maybe CardName)
 greedyAct g = do
   let as = filter isAction $ (cards.hand.p1) g
   case length as of
@@ -63,13 +63,13 @@ greedyAct g = do
          else return $ Just $ maximumBy (comparing cost) as
 
 -- Greedy CHANCELLOR always discards deck
-greedyMayPick :: Game -> CardName -> IO (Maybe CardName)
+greedyMayPick :: Game -> CardName -> IS.Measure (Maybe CardName)
 greedyMayPick g c' = return $ case c' of
   CHANCELLOR -> Just COPPER  -- any card triggers a discard deck
   otherwise  -> Nothing
 
 -- Not necessary with only VILLAGE and CHANCELLOR actions:
-greedyMustPick :: Game -> CardName -> IO CardName
+greedyMustPick :: Game -> CardName -> IS.Measure CardName
 greedyMustPick g c' = undefined
 
 greedyPlayer ps n = defaultPlayer

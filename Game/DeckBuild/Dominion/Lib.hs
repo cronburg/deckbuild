@@ -48,10 +48,10 @@ canPlay g c = elem c ((cards . hand . p1) g)
 
 -- Takes all of player #1's discarded cards and shuffles them back into her deck:
 --shuffle :: forall m. MonadState Game m => m ()
-shuffleCards :: Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
+shuffleCards :: STMeasure Game () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => m ()
 shuffleCards = do
     g <- get
-    newDeck <- shuffleList $ ((cards . discardPile . p1) g) ++ ((cards . deck . p1) g)
+    newDeck <- lift $ shuffleList $ ((cards . discardPile . p1) g) ++ ((cards . deck . p1) g)
     put g { p1 = (p1 g)
             { deck= ((deck.p1) g) {cards=newDeck}
             , discardPile=((discardPile.p1) g) {cards=[]}
@@ -60,7 +60,7 @@ shuffleCards = do
 
 -- Player #1 draws n cards from her deck
 --draw :: Int -> State (GameState Game) ()
-draw :: Int -> Measure () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => Int -> m ()
+draw :: Int -> STMeasure Game () --forall (m :: * -> *). (MonadState Game m, MonadIO m) => Int -> m ()
 draw 0 = return ()
 draw n = do
     g <- get 
@@ -76,7 +76,7 @@ draw n = do
 
 -- Player #1 discards a specific card from her hand
 -- TODO: Error handling when card is not in hand - probably use a Maybe
-discard :: forall (m :: * -> *). MonadState Game m => CardName -> m ()
+discard :: CardName -> STMeasure Game () --forall (m :: * -> *). MonadState Game m => CardName -> m ()
 discard c = do
   g <- get
   let newDiscard = c : (cards.discardPile.p1) g
@@ -123,7 +123,7 @@ gain c = do
               }   
             }   
 
-doBasicEffect :: Effect -> Measure () --forall (m :: * -> *). (MonadIO m, MonadState Game m) => Effect -> m ()
+doBasicEffect :: Effect -> STMeasure Game () --forall (m :: * -> *). (MonadIO m, MonadState Game m) => Effect -> m ()
 doBasicEffect e = do
   g <- get
   case effectType e of
@@ -133,7 +133,7 @@ doBasicEffect e = do
     CARDS         -> draw       $ (amount e)
     VICTORYPOINTS -> nop -- TODO: ???
 
-playCard :: CardName -> Measure () --forall (m :: * -> *). (MonadIO m, MonadState Game m) => CardName -> m ()
+playCard :: CardName -> STMeasure Game () --forall (m :: * -> *). (MonadIO m, MonadState Game m) => CardName -> m ()
 playCard c = do
   g <- get
   let c0:cs   = (cards . hand . p1) g

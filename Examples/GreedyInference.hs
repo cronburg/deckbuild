@@ -50,16 +50,16 @@ sampleBuy ps g = do
         (cardValue ps g c) > 0.0 && canBuy g c]  -- Buy conditions
     return card
 
-greedyBuy :: (Double,Double) -> Game -> IO (Maybe CardName)
+greedyBuy :: (Double,Double) -> Game -> IS.Measure (Maybe CardName)
 greedyBuy ps g = do
-  wantACard <- sample1 (wantToBuy g) []
+  wantACard <- wantToBuy g
   if wantACard then do
-    c <- sample1 (sampleBuy ps g) []
+    c <- sampleBuy ps g
     return $ Just c
   else
     return $ Nothing
 
-greedyAct :: Game -> IO (Maybe CardName)
+greedyAct :: Game -> IS.Measure (Maybe CardName)
 greedyAct g = do
   let as = filter isAction $ (cards.hand.p1) g
   case length as of
@@ -69,13 +69,13 @@ greedyAct g = do
          else return $ Just $ maximumBy (comparing cost) as
 
 -- Greedy CHANCELLOR always discards deck
-greedyMayPick :: Game -> CardName -> IO (Maybe CardName)
+greedyMayPick :: Game -> CardName -> IS.Measure (Maybe CardName)
 greedyMayPick g c' = return $ case c' of
   CHANCELLOR -> Just COPPER  -- any card triggers a discard deck
   otherwise  -> Nothing
 
 -- Not necessary with only VILLAGE and CHANCELLOR actions:
-greedyMustPick :: Game -> CardName -> IO CardName
+greedyMustPick :: Game -> CardName -> IS.Measure CardName
 greedyMustPick g c' = undefined
 
 greedyPlayer ps n = defaultPlayer
@@ -92,7 +92,8 @@ greedyGame ps = defaultBaseGame
   }
 
 runGreedy :: (Double,Double) -> IS.Measure Game --MonadIO m => (Double,Double) -> m Game
-runGreedy ps = put (greedyGame ps) >> runGame >> get >>= return
+runGreedy ps = execStateT runGame (greedyGame ps)
+--put (greedyGame ps) >> runGame >> get >>= return
 
 logprob :: (Double,Double) -> IS.Measure Double --MonadIO m => (Double,Double) -> m Double
 logprob ps = do
@@ -105,13 +106,12 @@ greedyModel :: IS.Measure Double
 greedyModel = do
   param0 <- uncnd $ uniform 0 1 
   let param1 = 1 - param0
-  runGreedy (param0,param1)
-  g <- get
+  g <- runGreedy (param0,param1)
   turns <- cnd $ categorical [(turn g, 1.0)]
   return $ param0
 
 main n = do
-  mixture <- IS.empiricalMeasure 10 greedyModel []
+  mixture <- IS.empiricalMeasure 10 greedyModel [Just (toDyn (Discrete (36 :: Int)))]
   return mixture
   --samples <- mcmc greedyModel $ [Just (toDyn (Discrete (36 :: Int)))]
   --return $ take n samples

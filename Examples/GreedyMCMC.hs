@@ -21,7 +21,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 greedyModel :: IS.Measure Int
 greedyModel = do
-  param0 <- uncnd$ uniform 0 1
+  param0 <- uncnd $ uniform 0 1
   let param1 = 1 - param0
   runGreedy (param0,param1)
   g <- get
