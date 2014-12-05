@@ -2,13 +2,13 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                deckbuild-model
-version:             0.1.0.0
+version:             0.1.0.1
 synopsis:            Probabilistic modeling of deck building games
 -- description:
 homepage:            https://github.com/cronburg/150-ppl
 license:             BSD3
 license-file:        LICENSE
-author:              Karl Cronburg
+author:              Karl Cronburg, Matthew Ahrens, Raoul Veroy
 maintainer:          karl.cronburg@gmail.com
 -- copyright:
 category:            Game
