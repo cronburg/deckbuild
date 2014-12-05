@@ -14,7 +14,7 @@ import Examples.BaseQuote
 import Game.Sample.Hakaru
 import Language.Hakaru.Mixture (point)
 import Language.Hakaru.Sampler (deterministic)
-import Language.Hakaru.ImportanceSampler (Measure(..))
+--import Language.Hakaru.ImportanceSampler (Measure(..))
 import System.IO.Unsafe (unsafePerformIO)
 
 -- Kingdom RuntimeCardclass type

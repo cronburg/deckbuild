@@ -2,8 +2,7 @@
              KindSignatures, ScopedTypeVariables #-}
 module Game.Sample.Sample where
 -- Useful sampling functions used when playing games
-import qualified Language.Hakaru.ImportanceSampler as IS
-import Language.Hakaru.Metropolis hiding (sample)
+--import Language.Hakaru.Metropolis hiding (sample)
 import Language.Hakaru.Types -- Discrete
 import Language.Hakaru.Distribution
 
@@ -16,27 +15,26 @@ import Game.Sample.Hakaru
 fI = fromIntegral
 
 -- Importance Sampler macros:
-sample1 :: (Show a, Ord a) => IS.Measure a -> [Cond] -> IO a
+sample1 :: (Typeable a, Show a, Ord a) => Measure a -> [Cond] -> IO a
 sample1 fncn conds = do
     s <- sampleN 1 fncn conds
     return $ head s
 
-sampleN :: (Show a, Ord a) => Int -> IS.Measure a -> [Cond] -> IO [a]
+sampleN :: (Typeable a, Show a, Ord a) => Int -> Measure a -> [Cond] -> IO [a]
 sampleN n fncn conds = do
     t <- sample fncn conds
     return $ take n $ map fst t
 
-uncnd :: Typeable a => Dist a -> IS.Measure a
-uncnd = IS.unconditioned
-
-cnd :: Typeable a => Dist a -> IS.Measure a
-cnd  = IS.conditioned
+--uncnd :: Typeable a => Dist a -> Measure a
+--uncnd = unconditioned
+--cnd :: Typeable a => Dist a -> Measure a
+--cnd  = conditioned
 
 -- Get a uniform int on a mn-closed mx-open interval [mn,mx)
-uniformInt :: Int -> Int -> IS.Measure Int
+uniformInt :: Int -> Int -> Measure Int
 uniformInt mn' mx' = do
     let (mn,mx) = (fI mn', fI mx') :: (Double,Double)
-    dbl <- (uncnd $ uniform mn mx) :: IS.Measure Double
+    dbl <- (uncnd $ uniform mn mx) :: Measure Double
     if ((==) dbl mx) then return $ truncate mx
     else return $ floor dbl
 
@@ -53,7 +51,7 @@ uniformInt mn' mx' = do
 --    g <- newStdGen -- TODO: keep random gen in game data type
 --    return $ shuffle' d (length d) g
 
-shuffleList :: (Typeable a, Eq a) => [a] -> IS.Measure [a]
+shuffleList :: (Typeable a, Eq a) => [a] -> Measure [a]
 shuffleList []     = uncnd $ categorical [([],1)]
 shuffleList (x:[]) = uncnd $ categorical [([x],1)]
 shuffleList xs     = do

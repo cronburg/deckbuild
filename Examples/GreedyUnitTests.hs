@@ -22,6 +22,6 @@ firstHandGame = defaultGame
 
 -- Greedy CELLAR player should discard all three victory cards in her hand:
 gTest0 =
-  let g = unsafePerformIO $ sample1 (put greedyGame >> baseCardEffects CELLAR >> get >>= return) []
+  let g = unsafePerformIO $ sample1 (evalStateT (baseCardEffects CELLAR >> get >>= return) greedyGame) []
   in [elem c ((cards.discardPile.p1) g) | c <- [ESTATE,DUCHY,PROVINCE]]
 

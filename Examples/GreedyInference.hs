@@ -6,13 +6,15 @@ import Game.DeckBuild.Dominion.Lib
 import Game.DeckBuild.Dominion.Engine
 import Game.DeckBuild.Dominion.Types
 import Game.Sample.Sample
+import Game.Sample.Hakaru
 import Examples.Base
 import Examples.BaseQuote
 
-import qualified Language.Hakaru.ImportanceSampler as IS
-import Language.Hakaru.Metropolis
+--import qualified Language.Hakaru.ImportanceSampler as IS
+import Language.Hakaru.Metropolis (Measure,unconditioned,conditioned,mcmc)
 import Language.Hakaru.Types -- Discrete
 import Language.Hakaru.Distribution
+import qualified Data.Vector as V
 
 import Control.Monad.State
 import Data.List (maximumBy)
@@ -23,7 +25,7 @@ import Data.Dynamic (toDyn)
 import Data.Typeable
 
 -- Whether or not player #1 wants to buy a card during this buy phase:
-wantToBuy :: Game -> IS.Measure Bool
+wantToBuy :: Game -> Measure Bool
 wantToBuy g = return $ (amtMoney.p1) g > 2
 
 wantCard :: Game -> CardName -> Bool
@@ -42,7 +44,7 @@ cardValue ps g c = let (param0,param1) = ps in
     (_,PROVINCE)   -> 1.0
     otherwise      -> 0.0
   
-sampleBuy :: (Double,Double) -> Game -> IS.Measure CardName
+sampleBuy :: (Double,Double) -> Game -> Measure CardName
 sampleBuy ps g = do
     card <- uncnd $ categorical $
       [(c, cardValue ps g c) |                   -- Categorical value
@@ -50,7 +52,7 @@ sampleBuy ps g = do
         (cardValue ps g c) > 0.0 && canBuy g c]  -- Buy conditions
     return card
 
-greedyBuy :: (Double,Double) -> Game -> IS.Measure (Maybe CardName)
+greedyBuy :: (Double,Double) -> Game -> Measure (Maybe CardName)
 greedyBuy ps g = do
   wantACard <- wantToBuy g
   if wantACard then do
@@ -59,7 +61,7 @@ greedyBuy ps g = do
   else
     return $ Nothing
 
-greedyAct :: Game -> IS.Measure (Maybe CardName)
+greedyAct :: Game -> Measure (Maybe CardName)
 greedyAct g = do
   let as = filter isAction $ (cards.hand.p1) g
   case length as of
@@ -69,13 +71,13 @@ greedyAct g = do
          else return $ Just $ maximumBy (comparing cost) as
 
 -- Greedy CHANCELLOR always discards deck
-greedyMayPick :: Game -> CardName -> IS.Measure (Maybe CardName)
+greedyMayPick :: Game -> CardName -> Measure (Maybe CardName)
 greedyMayPick g c' = return $ case c' of
   CHANCELLOR -> Just COPPER  -- any card triggers a discard deck
   otherwise  -> Nothing
 
 -- Not necessary with only VILLAGE and CHANCELLOR actions:
-greedyMustPick :: Game -> CardName -> IS.Measure CardName
+greedyMustPick :: Game -> CardName -> Measure CardName
 greedyMustPick g c' = undefined
 
 greedyPlayer ps n = defaultPlayer
@@ -91,18 +93,18 @@ greedyGame ps = defaultBaseGame
   , p2 = greedyPlayer ps "Greedy2"
   }
 
-runGreedy :: (Double,Double) -> IS.Measure Game --MonadIO m => (Double,Double) -> m Game
+runGreedy :: (Double,Double) -> Measure Game --MonadIO m => (Double,Double) -> m Game
 runGreedy ps = execStateT runGame (greedyGame ps)
 --put (greedyGame ps) >> runGame >> get >>= return
 
-logprob :: (Double,Double) -> IS.Measure Double --MonadIO m => (Double,Double) -> m Double
+logprob :: (Double,Double) -> Measure Double --MonadIO m => (Double,Double) -> m Double
 logprob ps = do
   g <- runGreedy ps
   return $ 0 - (fI $ turn g)
 
 -------------------------------------------------------------------------------
 -- Top-level functions
-greedyModel :: IS.Measure Double
+greedyModel :: Measure Double
 greedyModel = do
   param0 <- uncnd $ uniform 0 1 
   let param1 = 1 - param0
@@ -110,9 +112,24 @@ greedyModel = do
   turns <- cnd $ categorical [(turn g, 1.0)]
   return $ param0
 
-main n = do
-  mixture <- IS.empiricalMeasure 10 greedyModel [Just (toDyn (Discrete (36 :: Int)))]
-  return mixture
+-- conditioned MCMC rejection sampling
+--main num_sample num_turns = empiricalMeasure num_sample greedyModel [Just (toDyn (Discrete (num_turns :: Int)))]
+
+--do
+  -- TODO: source of randomness???...
+  --mixture <- empiricalMeasure num_sample greedyModel [Just (toDyn (Discrete (num_turns :: Int)))]
+  --return mixture
+  
   --samples <- mcmc greedyModel $ [Just (toDyn (Discrete (36 :: Int)))]
   --return $ take n samples
+
+--runMetrop :: Int -> Int -> IO [Double]
+runMetrop nturn =  do
+--  samples <- mcmc greedyModel [Just (toDyn (Discrete (nturn :: Int)))]
+--  let l = V.fromList (take nsample samples)
+--  return l
+  samples <- sample greedyModel [Just (toDyn (Discrete (nturn :: Int)))]
+  let r = fst $ head $ take 1 samples
+  return r
+  --return $ take nsample samples
 
