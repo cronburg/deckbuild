@@ -1,0 +1,11 @@
+#!/bin/bash
+
+HSK="runhaskell "
+pkg_db="-package-db="
+sandbox="./.cabal-sandbox/x86_64-linux-ghc-7.8.3-packages.conf.d "
+script="scriptMetrop.hs "
+cmd="$HSK $pkg_db$sandbox $script"
+
+#echo $cmd
+while [ 1 ]; do $cmd; done
+
