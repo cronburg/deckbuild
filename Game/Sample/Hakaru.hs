@@ -3,6 +3,7 @@
 module Game.Sample.Hakaru
   ( Measure
   , sample
+  , mcmc
   , cnd
   , uncnd
   ) where
@@ -50,6 +51,12 @@ sample prog cds  = do
   --g <- MWC.create
   (v, d, llTotal, _, _) <- initialStep prog cds g
   (transition prog cds v d llTotal g) >>= return . map (\ x -> (x,1)) 
+
+mcmc :: Typeable a => Measure a -> [Cond] -> IO [a]
+mcmc prog cds = do
+  g <- MWC.createSystemRandom
+  (v, d, llTotal, _, _) <- initialStep prog cds g
+  transition prog cds v d llTotal g
 
 uncnd = unconditioned
 cnd = conditioned
