@@ -9,7 +9,7 @@ import Examples.Base
 import Examples.BaseQuote
 
 --import qualified Language.Hakaru.ImportanceSampler as IS
-import Language.Hakaru.Metropolis
+--import Language.Hakaru.Metropolis
 import Language.Hakaru.Types -- Discrete
 import Language.Hakaru.Distribution
 

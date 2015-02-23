@@ -11,7 +11,8 @@ import Examples.Base
 import Examples.BaseQuote
 
 --import qualified Language.Hakaru.ImportanceSampler as IS
-import Language.Hakaru.Metropolis (Measure,unconditioned,conditioned,mcmc)
+--import Language.Hakaru.Metropolis (Measure,unconditioned,conditioned,mcmc)
+import Language.Hakaru.ImportanceSampler
 import Language.Hakaru.Types -- Discrete
 import Language.Hakaru.Distribution
 import qualified Data.Vector as V
@@ -113,7 +114,7 @@ greedyModel = do
   return $ param0
 
 -- conditioned MCMC rejection sampling
---main num_sample num_turns = empiricalMeasure num_sample greedyModel [Just (toDyn (Discrete (num_turns :: Int)))]
+main num_sample num_turns = empiricalMeasure num_sample greedyModel [Just (toDyn (Discrete (num_turns :: Int)))]
 
 --do
   -- TODO: source of randomness???...
@@ -123,13 +124,26 @@ greedyModel = do
   --samples <- mcmc greedyModel $ [Just (toDyn (Discrete (36 :: Int)))]
   --return $ take n samples
 
+
+-- TODO: USE THIS ONE WHEN YOU SWITCH BACK
 --runMetrop :: Int -> Int -> IO [Double]
-runMetrop nturn =  do
+--runMetrop nturn nsample =  do
 --  samples <- mcmc greedyModel [Just (toDyn (Discrete (nturn :: Int)))]
+--  return $ V.fromList (take nsample samples)
+
+
+
+
+
 --  let l = V.fromList (take nsample samples)
 --  return l
-  samples <- sample greedyModel [Just (toDyn (Discrete (nturn :: Int)))]
-  let r = fst $ head $ take 1 samples
-  return r
+  
+-- TODO: why was I insisting on using this one?:
+--  samples <- sample greedyModel [Just (toDyn (Discrete (nturn :: Int)))]
+--  return samples
+
+
+  --let r = fst $ head $ take 1 samples
+  --return r
   --return $ take nsample samples
 

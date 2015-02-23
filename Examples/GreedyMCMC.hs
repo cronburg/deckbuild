@@ -9,7 +9,7 @@ import Examples.Base
 import Examples.GreedySampler
 
 --import qualified Language.Hakaru.ImportanceSampler as IS
-import Language.Hakaru.Metropolis
+--import Language.Hakaru.Metropolis
 import Language.Hakaru.Types -- Discrete
 import Language.Hakaru.Distribution
 import Language.Hakaru.Mixture (toList, Prob)

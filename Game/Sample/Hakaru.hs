@@ -9,17 +9,19 @@ module Game.Sample.Hakaru
   ) where
 
 import Language.Hakaru.Types
---import Language.Hakaru.Mixture (Prob)
---import Language.Hakaru.Mixture (Mixture(..))
+import Language.Hakaru.Mixture (Prob)
+import Language.Hakaru.Mixture (Mixture(..))
 import Language.Hakaru.Sampler ()
 
 import qualified System.Random.MWC as MWC
---import System.IO.Unsafe
---import qualified Data.Map.Strict as M
+import System.IO.Unsafe
+import qualified Data.Map.Strict as M
 
---import Language.Hakaru.ImportanceSampler hiding (sample)
-import Language.Hakaru.Metropolis hiding (sample)
-import Data.Typeable (Typeable)
+-- TODO: switch back to Metropolis...
+import Language.Hakaru.ImportanceSampler hiding (sample)
+--import Language.Hakaru.Metropolis hiding (sample)
+
+--import Data.Typeable (Typeable)
 
 --import Control.Monad.State
 --instance (MonadState Game) Measure
@@ -28,7 +30,6 @@ import Data.Typeable (Typeable)
 --instance MonadIO Measure where
 --  liftIO = liftIO
 
-{-
 -- Taken from ImportanceSampler.hs in Hakaru (need to modify slightly):
 sample :: Measure a -> [Cond] -> IO [(a, Prob)]
 sample measure conds = do
@@ -41,8 +42,8 @@ sample measure conds = do
               let x = mixToTuple (finish u)
               xs <- unsafeInterleaveIO $ sampleNext g
               return (x : xs)
--}
 
+{-
 -- Metropolis Hastings sampler
 sample :: Typeable a => Measure a -> [Cond] -> IO [(a, Double)]
 sample prog cds  = do 
@@ -51,6 +52,7 @@ sample prog cds  = do
   --g <- MWC.create
   (v, d, llTotal, _, _) <- initialStep prog cds g
   (transition prog cds v d llTotal g) >>= return . map (\ x -> (x,1)) 
+-}
 
 mcmc :: Typeable a => Measure a -> [Cond] -> IO [a]
 mcmc prog cds = do
